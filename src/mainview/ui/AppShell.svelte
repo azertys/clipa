@@ -41,6 +41,9 @@
 	.main {
 		flex: 1;
 		min-width: 0;
+		/* Contains the absolutely placed .clipa-sr-only elements. Without it, one low on a long
+		   screen (Reports, Settings) makes the page taller than the window: a second scrollbar. */
+		position: relative;
 		overflow-y: auto;
 		padding: 28px 40px 48px;
 	}

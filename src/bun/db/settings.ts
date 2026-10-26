@@ -30,10 +30,12 @@ export function readSettings(db: Database): Settings {
 	);
 	return {
 		defaultTagIds: getSetting<string[]>(db, "default_tag_ids", []).filter((id) => live.has(id)),
+		showTrackedTime: getSetting(db, "show_tracked_time", true),
 	};
 }
 
 export function writeSettings(db: Database, patch: Partial<Settings>): Settings {
 	if (patch.defaultTagIds !== undefined) setSetting(db, "default_tag_ids", patch.defaultTagIds);
+	if (patch.showTrackedTime !== undefined) setSetting(db, "show_tracked_time", patch.showTrackedTime);
 	return readSettings(db);
 }

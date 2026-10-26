@@ -1,8 +1,15 @@
 import type { Database } from "bun:sqlite";
 import { BrowserView } from "electrobun/main";
-import { expandInstances } from "../../core/recurrence";
 import type { AppInfo, ClipaRPC, UiStart } from "../shared/rpc-schema";
 import { getEntry, listEntries, saveEntry } from "./db/entries";
+import {
+	deleteEventOccurrence,
+	editEventOccurrence,
+	getEvent,
+	listInstances,
+	liveExceptions,
+	saveNewEvent,
+} from "./db/events";
 import type { WriteContext } from "./db/repo";
 import { readSettings, writeSettings } from "./db/settings";
 import { deleteTag, listTags, saveTag } from "./db/tags";
@@ -64,8 +71,21 @@ export function createRpc(app: AppContext) {
 				settingsGet: () => readSettings(db),
 				settingsSet: (patch) => writeSettings(db, patch),
 
-				// The calendar arrives in M2. No events are stored yet.
-				eventsInstances: ({ from, to }) => expandInstances([], [], from, to),
+				eventsInstances: ({ from, to }) => listInstances(db, from, to),
+				eventsGet: ({ id }) => {
+					const event = getEvent(db, id);
+					if (!event || event.deleted_at !== null) return null;
+					return { event, exceptionStarts: liveExceptions(db, id).map((x) => x.original_start) };
+				},
+				eventsCreate: ({ fields, tzid }) => saveNewEvent(db, ctx, fields, tzid),
+				eventsEditOccurrence: (input) => {
+					editEventOccurrence(db, ctx, input);
+					return true as const;
+				},
+				eventsDeleteOccurrence: (input) => {
+					deleteEventOccurrence(db, ctx, input);
+					return true as const;
+				},
 			},
 			messages: {},
 		},

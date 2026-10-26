@@ -6,7 +6,8 @@
 	"description": "Clipa: a local-first desktop time tracker",
 	"dependencies": {
 		"@event-calendar/core": "5.17.2",
-		"@js-temporal/polyfill": "0.5.1"
+		"@js-temporal/polyfill": "0.5.1",
+		"rrule": "2.8.1"
 	},
 	"devDependencies": {
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",

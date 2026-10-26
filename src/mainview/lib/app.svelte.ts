@@ -14,7 +14,7 @@ class AppState {
 	panelEntryId = $state<string | null>(null);
 	running = $state<EntryWithTags | null>(null);
 	tags = $state<Tag[]>([]);
-	settings = $state<Settings>({ defaultTagIds: [] });
+	settings = $state<Settings>({ defaultTagIds: [], showTrackedTime: true });
 	/** Updated every second, for elapsed time. */
 	now = $state(Date.now());
 	/** Bumped when entries change. Screens reload when it changes. */

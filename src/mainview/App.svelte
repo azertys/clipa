@@ -5,6 +5,7 @@
 	import { app } from "./lib/app.svelte";
 	import { api } from "./lib/rpc";
 	import RecoveryDialog from "./components/RecoveryDialog.svelte";
+	import Calendar from "./screens/Calendar.svelte";
 	import Entries from "./screens/Entries.svelte";
 	import Placeholder from "./screens/Placeholder.svelte";
 	import Settings from "./screens/Settings.svelte";
@@ -60,7 +61,7 @@
 		{/if}
 	</nav>
 
-	<main class:flush={app.screen === "entries"}>
+	<main class:flush={app.screen === "entries" || app.screen === "calendar"}>
 		{#if app.error}
 			<div class="error" role="alert">
 				{app.error}
@@ -72,7 +73,7 @@
 		{:else if app.screen === "entries"}
 			<Entries />
 		{:else if app.screen === "calendar"}
-			<Placeholder text={strings.placeholder.calendar} />
+			<Calendar />
 		{:else if app.screen === "reports"}
 			<Placeholder text={strings.placeholder.reports} />
 		{:else}

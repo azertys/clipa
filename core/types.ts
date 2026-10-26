@@ -49,15 +49,32 @@ export type EventException = SyncColumns & {
 	new_notes: string | null;
 };
 
+/** The spec's Instance, plus notes, color and recurring for the calendar. */
 export type Instance = {
 	eventId: string;
 	originalStart: number; // UTC ms of the generated occurrence
 	start: number; // UTC ms after exceptions
 	end: number;
 	title: string;
+	notes: string;
+	color: string | null;
 	allDay: boolean;
+	recurring: boolean;
 	isException: boolean;
 };
+
+/** The fields the event dialog edits. start and end are instants; an all-day end is the next local midnight. */
+export type EventFields = {
+	title: string;
+	notes: string;
+	color: string | null;
+	start: number;
+	end: number;
+	allDay: boolean;
+	rrule: string | null;
+};
+
+export type EditMode = "this" | "following" | "all";
 
 /** Create (no id) or update (id) an entry. ended_at null only for the running entry. */
 export type EntryInput = {

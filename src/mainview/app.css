@@ -13,6 +13,7 @@
 	--accent-text: #ffffff;
 	--danger: #dc2626;
 	--warn: #d97706;
+	--tracked: #16a34a;
 	--error: #991b1b;
 	--error-bg: #fee2e2;
 }
@@ -32,6 +33,7 @@
 		--accent-text: #0b1220;
 		--danger: #f87171;
 		--warn: #fbbf24;
+		--tracked: #22c55e;
 		--error: #fecaca;
 		--error-bg: #450a0a;
 	}
@@ -136,4 +138,25 @@ textarea:focus {
 :focus-visible {
 	outline: 2px solid var(--accent);
 	outline-offset: 1px;
+}
+
+dialog {
+	max-width: 420px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	padding: 20px;
+	background: var(--surface);
+	color: var(--text);
+	box-shadow: 0 20px 60px rgb(0 0 0 / 0.3);
+}
+
+dialog::backdrop {
+	background: rgb(0 0 0 / 0.35);
+}
+
+dialog footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
 }

@@ -1,8 +1,16 @@
 <script lang="ts">
 	import { entryInterval, firstLine, trackedMs } from "../../../core/entries";
 	import { overlappingIds } from "../../../core/overlap";
-	import { addLocalDays, formatClock, formatDuration, formatElapsed, startOfLocalDay } from "../../../core/time";
-	import type { EntryWithTags } from "../../../core/types";
+	import { coverageList, trackedIntervals } from "../../../core/reports";
+	import {
+		addLocalDays,
+		formatClock,
+		formatDuration,
+		formatElapsed,
+		formatPercent,
+		startOfLocalDay,
+	} from "../../../core/time";
+	import type { EntryWithTags, Instance } from "../../../core/types";
 	import TagCombobox from "../components/TagCombobox.svelte";
 	import TagList from "../components/TagList.svelte";
 	import { app, tz } from "../lib/app.svelte";
@@ -10,6 +18,7 @@
 	import { strings } from "../strings";
 
 	let entries = $state<EntryWithTags[]>([]);
+	let instances = $state<Instance[]>([]);
 
 	const dayStart = $derived(startOfLocalDay(app.now, tz));
 	const dayEnd = $derived(addLocalDays(dayStart, 1, tz));
@@ -19,8 +28,14 @@
 		overlappingIds(entries.map((e) => ({ id: e.id, ...entryInterval(e, app.now) }))),
 	);
 
+	const tracked = $derived(trackedIntervals(entries, dayStart, dayEnd, app.now));
+	const events = $derived(coverageList(instances, tracked, dayStart, dayEnd));
+
 	async function load() {
-		entries = await api.entriesList({ from: dayStart, to: dayEnd });
+		[entries, instances] = await Promise.all([
+			api.entriesList({ from: dayStart, to: dayEnd }),
+			api.eventsInstances({ from: dayStart, to: dayEnd }),
+		]);
 	}
 
 	$effect(() => {
@@ -81,7 +96,34 @@
 
 	<div class="card">
 		<h2>{strings.today.eventsTitle}</h2>
-		<p class="muted">{strings.today.eventsLater}</p>
+		{#if events.length === 0}
+			<p class="muted">{strings.today.eventsEmpty}</p>
+		{:else}
+			<ul class="events">
+				{#each events as e (`${e.instance.eventId}:${e.instance.originalStart}`)}
+					<li>
+						<button class="event" onclick={() => (app.screen = "calendar")}>
+							<span class="time">{formatClock(e.instance.start, tz)}–{formatClock(e.instance.end, tz)}</span>
+							<span class="note">
+								<span class="dot" style:background={e.instance.color ?? "var(--accent)"}></span>
+								{e.instance.title || strings.calendar.untitled}
+							</span>
+							<span class="bar" aria-hidden="true">
+								{#each e.segments as seg (seg.start)}
+									<span
+										style:left="{((seg.start - Math.max(e.instance.start, dayStart)) / e.plannedMs) * 100}%"
+										style:width="{((seg.end - seg.start) / e.plannedMs) * 100}%"
+									></span>
+								{/each}
+							</span>
+							<span class="dur">
+								{strings.today.coverage(formatDuration(e.trackedMs), formatDuration(e.plannedMs), formatPercent(e.coverage))}
+							</span>
+						</button>
+					</li>
+				{/each}
+			</ul>
+		{/if}
 	</div>
 </section>
 
@@ -135,12 +177,14 @@
 		color: var(--text);
 		font-variant-numeric: tabular-nums;
 	}
-	.entries {
+	.entries,
+	.events {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 	}
-	.entry {
+	.entry,
+	.event {
 		display: grid;
 		grid-template-columns: 110px 1fr auto 56px;
 		gap: 12px;
@@ -155,8 +199,32 @@
 		text-align: left;
 		cursor: pointer;
 	}
-	.entry:hover {
+	.event {
+		grid-template-columns: 110px 1fr 120px 150px;
+	}
+	.entry:hover,
+	.event:hover {
 		background: var(--hover);
+	}
+	.dot {
+		display: inline-block;
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		margin-right: 6px;
+	}
+	.bar {
+		position: relative;
+		height: 8px;
+		border-radius: 4px;
+		background: var(--selected);
+		overflow: hidden;
+	}
+	.bar span {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		background: var(--tracked);
 	}
 	.time,
 	.dur {

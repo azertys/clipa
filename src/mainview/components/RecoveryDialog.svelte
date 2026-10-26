@@ -37,24 +37,3 @@
 		<button class="primary" onclick={resume}>{strings.dialogs.recoveryResume}</button>
 	</footer>
 </dialog>
-
-<style>
-	dialog {
-		max-width: 420px;
-		border: 1px solid var(--border);
-		border-radius: 12px;
-		padding: 20px;
-		background: var(--surface);
-		color: var(--text);
-		box-shadow: 0 20px 60px rgb(0 0 0 / 0.3);
-	}
-	dialog::backdrop {
-		background: rgb(0 0 0 / 0.35);
-	}
-	footer {
-		display: flex;
-		justify-content: flex-end;
-		gap: 8px;
-		margin-top: 16px;
-	}
-</style>

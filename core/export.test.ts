@@ -56,7 +56,7 @@ describe("report tables", () => {
 			{ tagId: "t1", ms: 90 * 60_000 },
 			{ tagId: null, ms: 30 * 60_000 },
 		],
-		apps: [{ appId: "a1", name: "Code", ms: 2 * HOUR }],
+		apps: [{ appId: "a1", name: "Code", ms: 2 * HOUR, titles: [] }],
 	};
 	const names = { tagName: (id: string) => (id === "t1" ? "Work" : id), untagged: "Untagged" };
 	const lines = (table: Parameters<typeof reportCsv>[1]) => reportCsv(report, table, names).slice(1).split("\r\n");

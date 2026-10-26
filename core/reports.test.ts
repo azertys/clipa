@@ -209,12 +209,53 @@ describe("buildReport (spec section 12)", () => {
 			],
 		});
 		expect(r.apps).toEqual([
-			{ appId: "code", name: "Code", ms: 1.5 * HOUR },
-			{ appId: "mail", name: "Mail", ms: 0.5 * HOUR },
+			{ appId: "code", name: "Code", ms: 1.5 * HOUR, titles: [] },
+			{ appId: "mail", name: "Mail", ms: 0.5 * HOUR, titles: [] },
 		]);
 		expect(r.events[0].apps).toEqual([
 			{ appId: "code", ms: 1.5 * HOUR },
 			{ appId: "mail", ms: 0.5 * HOUR },
 		]);
 	});
+});
+
+test("app titles: time per window title inside tracked time, longest first", () => {
+	const TZ = "Europe/Bucharest";
+	const r = buildReport({
+		from: DAY[0],
+		to: DAY[1],
+		tzid: TZ,
+		now: at("23:00"),
+		entries: [{ ...entry("09:00", "11:00"), tagIds: [] }],
+		events: [],
+		exceptions: [],
+		activity: [
+			{ app_id: "safari", window_title: "Docs", started_at: at("09:00"), ended_at: at("09:20") },
+			{ app_id: "safari", window_title: "Mail", started_at: at("09:20"), ended_at: at("10:20") },
+			{ app_id: "safari", window_title: "Docs", started_at: at("10:20"), ended_at: at("10:30") },
+			{ app_id: "safari", window_title: null, started_at: at("10:30"), ended_at: at("10:40") },
+			// Outside tracked time: does not count.
+			{ app_id: "safari", window_title: "Late", started_at: at("11:00"), ended_at: at("12:00") },
+			{ app_id: "code", window_title: null, started_at: at("10:40"), ended_at: at("11:00") },
+		],
+		apps: [
+			{ id: "safari", display_name: "Safari" },
+			{ id: "code", display_name: "Code" },
+		],
+		includeAllDay: false,
+	});
+	expect(r.apps).toEqual([
+		{
+			appId: "safari",
+			name: "Safari",
+			ms: 100 * 60_000,
+			titles: [
+				{ title: "Mail", ms: HOUR },
+				{ title: "Docs", ms: 30 * 60_000 },
+				{ title: null, ms: 10 * 60_000 },
+			],
+		},
+		// No title was recorded for Code: no title list.
+		{ appId: "code", name: "Code", ms: 20 * 60_000, titles: [] },
+	]);
 });

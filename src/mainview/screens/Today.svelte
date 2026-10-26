@@ -4,6 +4,7 @@
 	import { coverageList, trackedIntervals } from "../../../core/reports";
 	import { addLocalDays, formatDuration, localDate, startOfLocalDay } from "../../../core/time";
 	import type { EntryWithTags, Instance } from "../../../core/types";
+	import type { AppUsage } from "../../shared/rpc-schema";
 	import { app, tz } from "../lib/app.svelte";
 	import { longDay } from "../lib/dates";
 	import { api } from "../lib/rpc";
@@ -19,7 +20,7 @@
 	let entries = $state<EntryWithTags[]>([]);
 	let instances = $state<Instance[]>([]);
 	let recent = $state<Combo[]>([]);
-	let apps = $state<{ name: string; ms: number }[]>([]);
+	let apps = $state<AppUsage[]>([]);
 
 	// Apps of the running timer, refreshed every 10 s while it runs.
 	$effect(() => {

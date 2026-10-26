@@ -41,7 +41,7 @@ describe("loadReport", () => {
 		expect(r.events).toEqual([expect.objectContaining({ title: "Focus", trackedMs: 2 * HOUR, coverage: 0.5 })]);
 		expect(r.tags).toEqual([{ tagId: work.id, ms: 2 * HOUR }]);
 		// The activity of the deleted entry does not count.
-		expect(r.apps).toEqual([{ appId: "a1", name: "Code", ms: HOUR }]);
+		expect(r.apps).toEqual([{ appId: "a1", name: "Code", ms: HOUR, titles: [] }]);
 	});
 
 	test("an empty or reversed range is refused", () => {

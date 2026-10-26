@@ -45,7 +45,7 @@ export function coverageList(instances: Instance[], tracked: Interval[], from: n
 	return instances.filter((i) => !i.allDay).map((instance) => ({ instance, ...eventCoverage(instance, tracked, from, to) }));
 }
 
-export type ActivityRow = { app_id: string; started_at: number; ended_at: number };
+export type ActivityRow = { app_id: string; window_title?: string | null; started_at: number; ended_at: number };
 export type AppRow = { id: string; display_name: string };
 
 export type ReportInput = {
@@ -64,6 +64,12 @@ export type ReportInput = {
 };
 
 export type AppTime = { appId: string; ms: number };
+
+/** Time in one window title of an app. null = no title recorded. */
+export type TitleTime = { title: string | null; ms: number };
+
+/** The longest titles per app that a report keeps. */
+export const TITLES_PER_APP = 25;
 
 /** The spec's Report, plus the entry count, and planned time, color, all-day and recurring on each event. */
 export type Report = {
@@ -85,11 +91,19 @@ export type Report = {
 	})[];
 	/** tagId null = Untagged. */
 	tags: { tagId: string | null; ms: number }[];
-	apps: (AppTime & { name: string })[];
+	/** titles is empty when no window title was recorded for the app. */
+	apps: (AppTime & { name: string; titles: TitleTime[] })[];
 };
 
 const byMsDesc = <T extends { ms: number }>(key: (x: T) => string) => (a: T, b: T) =>
 	b.ms - a.ms || key(a).localeCompare(key(b));
+
+/** Time per window title, longest first and at most TITLES_PER_APP; none when no title was recorded. */
+export function titleList(times: Iterable<[string | null, number]>): TitleTime[] {
+	const list = [...times].map(([title, ms]) => ({ title, ms })).filter((t) => t.ms > 0);
+	if (list.every((t) => t.title === null)) return [];
+	return list.sort(byMsDesc((t) => t.title ?? "")).slice(0, TITLES_PER_APP);
+}
 
 /** Sums interval lengths by local date. */
 function msByDate(intervals: Interval[], tzid: string): Map<string, number> {
@@ -117,11 +131,25 @@ export function buildReport(input: ReportInput): Report {
 	const covered = intersect(tracked, planned);
 
 	const activityByApp = new Map<string, Interval[]>();
+	const activityByTitle = new Map<string, Map<string | null, Interval[]>>();
 	for (const a of input.activity) {
+		const interval = { start: a.started_at, end: a.ended_at };
 		const list = activityByApp.get(a.app_id) ?? [];
-		list.push({ start: a.started_at, end: a.ended_at });
+		list.push(interval);
 		activityByApp.set(a.app_id, list);
+		const titles = activityByTitle.get(a.app_id) ?? new Map<string | null, Interval[]>();
+		const title = a.window_title ?? null;
+		titles.set(title, [...(titles.get(title) ?? []), interval]);
+		activityByTitle.set(a.app_id, titles);
 	}
+	/** The titles of an app inside tracked time. */
+	const titlesOf = (appId: string): TitleTime[] =>
+		titleList(
+			[...(activityByTitle.get(appId) ?? [])].map(([title, list]) => [
+				title,
+				length(intersect(clip(list, from, to), tracked)),
+			]),
+		);
 	const appTime = new Map<string, Interval[]>();
 	for (const [appId, list] of activityByApp) appTime.set(appId, intersect(clip(list, from, to), tracked));
 	const appsIn = (window: Interval[]): AppTime[] =>
@@ -159,7 +187,12 @@ export function buildReport(input: ReportInput): Report {
 
 	const names = new Map(input.apps.map((a) => [a.id, a.display_name]));
 	const apps = [...appTime]
-		.map(([appId, intervals]) => ({ appId, name: names.get(appId) ?? appId, ms: length(intervals) }))
+		.map(([appId, intervals]) => ({
+			appId,
+			name: names.get(appId) ?? appId,
+			ms: length(intervals),
+			titles: titlesOf(appId),
+		}))
 		.filter((a) => a.ms > 0)
 		.sort(byMsDesc((a) => a.name));
 

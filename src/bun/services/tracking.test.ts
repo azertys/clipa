@@ -136,6 +136,11 @@ describe("sampler (M4 acceptance)", () => {
 		s.state.app = { key: "com.apple.Safari", name: "Safari" };
 		s.state.title = "Private tab";
 		s.run(5);
+		expect(s.tracking.sampler.liveAppTimes().map((a) => [a.name, a.titles.map((t) => t.title)])).toEqual([
+			["Code", ["main.ts"]],
+			["1Password", []],
+			["Excluded", []],
+		]);
 		s.timer.stop();
 		expect(s.activity().map((a) => [a.platform_key, a.display_name, a.window_title])).toEqual([
 			["com.microsoft.VSCode", "Code", "main.ts"],
@@ -151,7 +156,7 @@ describe("sampler (M4 acceptance)", () => {
 		s.tracking.sampler.flush();
 		expect(s.activity()).toEqual([expect.objectContaining({ entry_id: entry.id, ended_at: s.ctx.now() })]);
 		s.run(10);
-		expect(s.tracking.sampler.liveAppTimes()).toEqual([{ name: "Code", ms: 40 * SEC }]);
+		expect(s.tracking.sampler.liveAppTimes()).toEqual([{ name: "Code", ms: 40 * SEC, titles: [] }]);
 		s.timer.stop();
 	});
 

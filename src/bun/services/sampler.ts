@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 import { Segmenter, type Segment } from "../../../core/activity";
+import { titleList, type TitleTime } from "../../../core/reports";
 import type { Interval } from "../../../core/types";
 import type { Settings } from "../../shared/rpc-schema";
 import { activityOfEntry, appFor, writeSegment } from "../db/activity";
@@ -9,6 +10,8 @@ export const SAMPLE_MS = 1_000;
 export const FLUSH_MS = 30_000;
 /** The app key that stands for every app in the "Do not record" list. */
 export const EXCLUDED_KEY = "clipa.excluded";
+
+export type LiveAppTime = { name: string; ms: number; titles: TitleTime[] };
 
 export type SamplerOptions = {
 	db: Database;
@@ -90,26 +93,31 @@ export class Sampler {
 		if (this.segmenter) this.write(this.segmenter.flush(this.opts.now()));
 	}
 
-	/** Time per app of the running entry, with the open segment. */
-	liveAppTimes(): { name: string; ms: number }[] {
+	/** Time per app (and per window title) of the running entry, with the open segment. */
+	liveAppTimes(): LiveAppTime[] {
 		if (!this.entryId || !this.segmenter) return [];
 		const open = this.segmenter.current();
-		const totals = new Map<string, number>();
+		const apps = new Map<string, Map<string | null, number>>();
+		const add = (appId: string, title: string | null, ms: number) => {
+			const titles = apps.get(appId) ?? new Map<string | null, number>();
+			titles.set(title, (titles.get(title) ?? 0) + ms);
+			apps.set(appId, titles);
+		};
 		for (const row of activityOfEntry(this.opts.db, this.entryId)) {
-			if (row.id === open?.id) continue;
-			totals.set(row.app_id, (totals.get(row.app_id) ?? 0) + row.ended_at - row.started_at);
+			if (row.id !== open?.id) add(row.app_id, row.window_title, row.ended_at - row.started_at);
 		}
-		if (open) {
-			const appId = this.appId(open);
-			totals.set(appId, (totals.get(appId) ?? 0) + Math.max(0, this.opts.now() - open.start));
-		}
+		if (open) add(this.appId(open), open.title, Math.max(0, this.opts.now() - open.start));
 		const names = new Map(
 			(this.opts.db.query("SELECT id, display_name FROM apps").all() as { id: string; display_name: string }[]).map(
 				(a) => [a.id, a.display_name],
 			),
 		);
-		return [...totals]
-			.map(([id, ms]) => ({ name: names.get(id) ?? id, ms }))
+		return [...apps]
+			.map(([id, titles]) => ({
+				name: names.get(id) ?? id,
+				ms: [...titles.values()].reduce((sum, ms) => sum + ms, 0),
+				titles: titleList(titles),
+			}))
 			.filter((a) => a.ms > 0)
 			.sort((a, b) => b.ms - a.ms);
 	}

@@ -140,7 +140,7 @@
 					ms: t.ms,
 				};
 			}),
-			apps: r.apps.map((a) => ({ name: a.name, ms: a.ms })),
+			apps: r.apps.map((a) => ({ name: a.name, ms: a.ms, titles: a.titles })),
 		};
 	});
 </script>

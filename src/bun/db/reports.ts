@@ -9,7 +9,7 @@ import { AppError } from "./repo";
 export function listActivity(db: Database, from: number, to: number): ActivityRow[] {
 	return db
 		.query(
-			`SELECT a.app_id, a.started_at, a.ended_at FROM activity a
+			`SELECT a.app_id, a.window_title, a.started_at, a.ended_at FROM activity a
 			 JOIN time_entries e ON e.id = a.entry_id
 			 WHERE e.deleted_at IS NULL AND a.started_at < ? AND a.ended_at > ?`,
 		)

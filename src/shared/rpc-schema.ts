@@ -4,7 +4,7 @@
 import type { RPCSchema } from "electrobun/view";
 import type { Combo } from "../../core/entries";
 import type { ReportTable } from "../../core/export";
-import type { Report } from "../../core/reports";
+import type { Report, TitleTime } from "../../core/reports";
 import type { WeekStart } from "../../core/time";
 import type {
 	CalendarEvent,
@@ -69,6 +69,9 @@ export type OccurrenceRef = { eventId: string; originalStart: number; mode: Edit
 /** A report for [from, to). tzid is the device zone, for the per-day split. */
 export type ReportQuery = { from: number; to: number; tzid: string; includeAllDay: boolean };
 
+/** Time in one app, with its window titles when they were recorded. */
+export type AppUsage = { name: string; ms: number; titles: TitleTime[] };
+
 /** An idle period that ended: the view asks Keep / Discard / Discard and stop. */
 export type IdlePrompt = { id: string; entryId: string; start: number; end: number };
 
@@ -130,7 +133,7 @@ export type ClipaRPC = {
 			/** Apps seen by the sampler, for the "Do not record" lists. */
 			appsList: { params: {}; response: { key: string; name: string }[] };
 			/** Time per app of the running entry, with the open segment. */
-			timerApps: { params: {}; response: { name: string; ms: number }[] };
+			timerApps: { params: {}; response: AppUsage[] };
 
 			reportsGet: { params: ReportQuery; response: Report };
 			/** Writes report tables as CSV files to Downloads and shows them in Finder (D31). */

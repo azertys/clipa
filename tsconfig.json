@@ -16,6 +16,6 @@
 		"noFallthroughCasesInSwitch": true,
 		"moduleResolution": "bundler"
 	},
-	"include": ["src"],
+	"include": ["src", "core", "scripts", "electrobun.config.ts", "hutch.config.ts"],
 	"exclude": ["node_modules", "dist", "build", "../../package/dist"]
 }

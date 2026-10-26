@@ -8,6 +8,9 @@ export default {
 		hmr: "hutch electrobun prepare && hutch pm exec -- vite --port 5173",
 		build: "hutch electrobun prepare && hutch pm exec -- vite build && hutch electrobun build --env=stable",
 		"build:canary": "hutch electrobun prepare && hutch pm exec -- vite build && hutch electrobun build --env=canary",
+		native: ["swift", "build", "-c", "release", "--package-path", "native/macos"],
+		test: ["hutch", "test", "core", "src/bun"],
+		check: "hutch electrobun prepare && hutch pm exec -- svelte-check --tsconfig ./tsconfig.json",
 	},
 	electrobun: {
 		version: "2.0.5",

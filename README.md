@@ -1,66 +1,42 @@
-# Svelte Electrobun Template
+# Clipa
 
-A fast Electrobun desktop app template with Svelte 5 and Vite for hot module replacement (HMR).
+A local-first desktop time tracker for one user. macOS first. Built with Electrobun 2 (Bun main
+process, system WKWebView), Svelte 5 and SQLite.
 
-## Getting Started
+## Requirements
+
+- macOS 14 or later on Apple Silicon
+- Hutch (Electrobun's CLI). `npx electrobun init` installs it to `~/.hutch`, or see
+  <https://hutch.blackboard.sh>.
+- Swift (the Xcode Command Line Tools are enough) for `native/macos`
+
+## Commands
 
 ```bash
-# Install dependencies
-hutch run install
-
-# Development without HMR (uses bundled assets)
-hutch run dev
-
-# Development with HMR (recommended)
-hutch run dev:hmr
-
-# Build for production
-hutch run build:canary
+hutch run install   # install dependencies from hutch.lock
+hutch run dev       # build and run, rebuild on change
+hutch run dev:hmr   # same, with Vite hot reload for the view
+hutch run test      # unit and integration tests (bun test)
+hutch run check     # svelte-check + TypeScript
+hutch run native    # build libclipanative.dylib only
 ```
 
-## How HMR Works
+The dev build keeps its database at
+`~/Library/Application Support/dev.clipa.app/dev/clipa.db`.
 
-When you run `hutch run dev:hmr`:
-
-1. **Vite dev server** starts on `http://localhost:5173` with HMR enabled
-2. **Electrobun** starts and detects the running Vite server
-3. The app loads from the Vite dev server instead of bundled assets
-4. Changes to Svelte components update instantly without full page reload
-
-When you run `hutch run dev` (without HMR):
-
-1. Electrobun starts and loads from `views://mainview/index.html`
-2. Vite rebuilds the bundled assets before Electrobun starts
-
-## Project Structure
+## Layout
 
 ```
-├── src/
-│   ├── bun/
-│   │   └── index.ts        # Main process (Electrobun/Bun)
-│   └── mainview/
-│       ├── App.svelte      # Svelte app component
-│       ├── main.ts         # Svelte entry point
-│       ├── index.html      # HTML template
-│       └── app.css         # Global styles
-├── electrobun.config.ts    # Electrobun configuration
-├── vite.config.ts          # Vite configuration
-├── svelte.config.js        # Svelte configuration
-└── package.json
+core/            pure TypeScript domain logic and its tests (no Electrobun, Svelte or SQLite)
+src/bun/         main process: database, timer, tray, native calls, RPC handlers
+src/mainview/    Svelte 5 view; all UI strings are in strings.ts
+src/shared/      the typed RPC contract
+native/macos/    Swift package that builds libclipanative.dylib
+docs/            decisions.md, open-questions.md
 ```
 
-## Svelte 5 Features
+## Status
 
-This template uses Svelte 5 with the new runes syntax:
-
-- `$state()` - reactive state
-- `$derived()` - computed values
-- `$effect()` - side effects
-
-## Customizing
-
-- **Svelte components**: Edit files in `src/mainview/`
-- **Global styles**: Edit `src/mainview/app.css`
-- **Vite settings**: Edit `vite.config.ts`
-- **Window settings**: Edit `src/bun/index.ts`
-- **App metadata**: Edit `electrobun.config.ts`
+- M0 spike: done
+- M1 timer, entries, tags, tray: done (two manual UI checks pending, see `docs/decisions.md`)
+- M2 calendar, M3 reports, M4 tracking and idle, M5 export/import/release: not started

@@ -4,3 +4,6 @@ build/
 dist/
 artifacts/
 *.tsbuildinfo
+.cottontail-tmp/
+native/macos/.build/
+.DS_Store

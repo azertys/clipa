@@ -7,7 +7,7 @@
 	import RecoveryDialog from "./components/RecoveryDialog.svelte";
 	import Calendar from "./screens/Calendar.svelte";
 	import Entries from "./screens/Entries.svelte";
-	import Placeholder from "./screens/Placeholder.svelte";
+	import Reports from "./screens/Reports.svelte";
 	import Settings from "./screens/Settings.svelte";
 	import Today from "./screens/Today.svelte";
 	import { strings } from "./strings";
@@ -75,7 +75,7 @@
 		{:else if app.screen === "calendar"}
 			<Calendar />
 		{:else if app.screen === "reports"}
-			<Placeholder text={strings.placeholder.reports} />
+			<Reports />
 		{:else}
 			<Settings />
 		{/if}

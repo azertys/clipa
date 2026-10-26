@@ -1,5 +1,8 @@
 import type { Database } from "bun:sqlite";
-import { BrowserView } from "electrobun/main";
+import { BrowserView, Utils } from "electrobun/main";
+import { exportFileName, reportCsv } from "../../core/export";
+import { localDate } from "../../core/time";
+import { strings } from "../mainview/strings";
 import type { AppInfo, ClipaRPC, UiStart } from "../shared/rpc-schema";
 import { getEntry, listEntries, saveEntry } from "./db/entries";
 import {
@@ -11,8 +14,10 @@ import {
 	saveNewEvent,
 } from "./db/events";
 import type { WriteContext } from "./db/repo";
+import { loadReport } from "./db/reports";
 import { readSettings, writeSettings } from "./db/settings";
 import { deleteTag, listTags, saveTag } from "./db/tags";
+import { writeNewFile } from "./services/files";
 import type { TimerService } from "./services/timer";
 
 export type AppContext = {
@@ -85,6 +90,20 @@ export function createRpc(app: AppContext) {
 				eventsDeleteOccurrence: (input) => {
 					deleteEventOccurrence(db, ctx, input);
 					return true as const;
+				},
+
+				reportsGet: (query) => loadReport(db, query, ctx.now()),
+				reportsExportCsv: ({ table, ...query }) => {
+					const report = loadReport(db, query, ctx.now());
+					const tagNames = new Map(listTags(db).map((t) => [t.id, t.name]));
+					const content = reportCsv(report, table, {
+						tagName: (id) => tagNames.get(id) ?? id,
+						untagged: strings.tags.untagged,
+					});
+					const name = exportFileName(table, localDate(query.from, query.tzid), localDate(query.to - 1, query.tzid));
+					const path = writeNewFile(Utils.paths.downloads, name, content);
+					Utils.showItemInFolder(path);
+					return { path };
 				},
 			},
 			messages: {},

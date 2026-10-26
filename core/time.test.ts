@@ -3,6 +3,7 @@ import {
 	HOUR,
 	MINUTE,
 	addLocalDays,
+	dateRange,
 	formatClock,
 	formatDuration,
 	formatElapsed,
@@ -11,9 +12,12 @@ import {
 	isoLocal,
 	localDate,
 	localDateStart,
+	presetRange,
 	startOfLocalDay,
+	startOfLocalMonth,
 	startOfLocalWeek,
 	toLocalInput,
+	type RangePreset,
 } from "./time";
 
 const TZ = "Europe/Bucharest";
@@ -91,5 +95,34 @@ describe("datetime-local values", () => {
 	test("bad input", () => {
 		expect(fromLocalInput("", TZ)).toBeNull();
 		expect(fromLocalInput("not a date", TZ)).toBeNull();
+	});
+});
+
+describe("report ranges", () => {
+	// Monday 2026-10-26 10:00 local (+02:00). Summer time ended on Sunday 10-25.
+	const now = utc("2026-10-26T08:00:00Z");
+	const range = (preset: RangePreset) => {
+		const r = presetRange(preset, now, TZ);
+		return [new Date(r.from).toISOString(), new Date(r.to).toISOString()];
+	};
+
+	test("today, this week and last week", () => {
+		expect(range("today")).toEqual(["2026-10-25T22:00:00.000Z", "2026-10-26T22:00:00.000Z"]);
+		expect(range("thisWeek")).toEqual(["2026-10-25T22:00:00.000Z", "2026-11-01T22:00:00.000Z"]);
+		// Last week has 7 local days and 169 hours: it contains the DST change.
+		expect(range("lastWeek")).toEqual(["2026-10-18T21:00:00.000Z", "2026-10-25T22:00:00.000Z"]);
+	});
+
+	test("this month and last month", () => {
+		expect(range("thisMonth")).toEqual(["2026-09-30T21:00:00.000Z", "2026-10-31T22:00:00.000Z"]);
+		expect(range("lastMonth")).toEqual(["2026-08-31T21:00:00.000Z", "2026-09-30T21:00:00.000Z"]);
+		expect(startOfLocalMonth(utc("2026-01-15T10:00:00Z"), TZ, -1)).toBe(utc("2025-11-30T22:00:00Z"));
+	});
+
+	test("a custom range includes both dates", () => {
+		expect(dateRange("2026-10-24", "2026-10-25", TZ)).toEqual({
+			from: utc("2026-10-23T21:00:00Z"),
+			to: utc("2026-10-25T22:00:00Z"),
+		});
 	});
 });

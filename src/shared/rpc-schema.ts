@@ -2,6 +2,8 @@
 // Types only: this module emits no runtime code.
 // Names are camelCase versions of the spec's dotted names (docs/decisions.md, D2).
 import type { RPCSchema } from "electrobun/view";
+import type { ReportTable } from "../../core/export";
+import type { Report } from "../../core/reports";
 import type {
 	CalendarEvent,
 	EditMode,
@@ -41,6 +43,9 @@ export type EventDetail = { event: CalendarEvent; exceptionStarts: number[] };
 
 export type OccurrenceRef = { eventId: string; originalStart: number; mode: EditMode };
 
+/** A report for [from, to). tzid is the device zone, for the per-day split. */
+export type ReportQuery = { from: number; to: number; tzid: string; includeAllDay: boolean };
+
 export type UiStart = { navigation: Navigation | null; recovery: RecoveryNotice | null };
 
 export type ClipaRPC = {
@@ -75,6 +80,10 @@ export type ClipaRPC = {
 			eventsCreate: { params: { fields: EventFields; tzid: string }; response: CalendarEvent };
 			eventsEditOccurrence: { params: OccurrenceRef & { changes: Partial<EventFields> }; response: true };
 			eventsDeleteOccurrence: { params: OccurrenceRef; response: true };
+
+			reportsGet: { params: ReportQuery; response: Report };
+			/** Writes one report table as CSV to Downloads and shows it in Finder (D31). */
+			reportsExportCsv: { params: ReportQuery & { table: ReportTable }; response: { path: string } };
 		};
 		messages: {};
 	}>;

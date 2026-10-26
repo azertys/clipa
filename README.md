@@ -40,4 +40,5 @@ docs/            decisions.md, open-questions.md
 - M0 spike: done
 - M1 timer, entries, tags, tray: done (two manual UI checks pending, see `docs/decisions.md`)
 - M2 calendar and recurrence: done
-- M3 reports, M4 tracking and idle, M5 export/import/release: not started
+- M3 reports: done (one check on the Reports screen pending, see `docs/decisions.md`)
+- M4 tracking and idle, M5 export/import/release: not started

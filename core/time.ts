@@ -81,3 +81,37 @@ export function fromLocalInput(value: string, tzid: string): number | null {
 		return null;
 	}
 }
+
+/** UTC ms of local 00:00 on the first day of the month that contains ms, moved by `months`. */
+export function startOfLocalMonth(ms: number, tzid: string, months = 0): number {
+	return toZoned(ms, tzid).with({ day: 1 }).startOfDay().add({ months }).startOfDay().epochMilliseconds;
+}
+
+export type RangePreset = "today" | "thisWeek" | "lastWeek" | "thisMonth" | "lastMonth";
+
+/** The half-open range [from, to) of a report preset. Weeks start on Monday. */
+export function presetRange(preset: RangePreset, now: number, tzid: string): { from: number; to: number } {
+	switch (preset) {
+		case "today": {
+			const from = startOfLocalDay(now, tzid);
+			return { from, to: addLocalDays(from, 1, tzid) };
+		}
+		case "thisWeek": {
+			const from = startOfLocalWeek(now, tzid);
+			return { from, to: addLocalDays(from, 7, tzid) };
+		}
+		case "lastWeek": {
+			const to = startOfLocalWeek(now, tzid);
+			return { from: addLocalDays(to, -7, tzid), to };
+		}
+		case "thisMonth":
+			return { from: startOfLocalMonth(now, tzid), to: startOfLocalMonth(now, tzid, 1) };
+		case "lastMonth":
+			return { from: startOfLocalMonth(now, tzid, -1), to: startOfLocalMonth(now, tzid) };
+	}
+}
+
+/** The range for two local dates, both included. */
+export function dateRange(fromDate: string, toDate: string, tzid: string): { from: number; to: number } {
+	return { from: localDateStart(fromDate, tzid), to: addLocalDays(localDateStart(toDate, tzid), 1, tzid) };
+}

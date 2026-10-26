@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { getEntry, listEntries, saveEntry } from "../db/entries";
+import { writeRow } from "../db/repo";
 import { saveTag } from "../db/tags";
 import { testDb } from "../test-helpers";
 import { TimerService } from "./timer";
@@ -176,6 +177,17 @@ describe("heartbeat and crash recovery", () => {
 	test("recover with nothing running", () => {
 		const t = testDb();
 		expect(new TimerService({ db: t.db, ctx: t.ctx }).recover()).toEqual({ kind: "none" });
+	});
+
+	test("resync follows a running entry that an import wrote", () => {
+		const s = setup();
+		const id = Bun.randomUUIDv7();
+		writeRow(s.db, s.ctx, "time_entries", { id, started_at: s.ctx.now() - MIN, ended_at: null, note: "" });
+		s.timer.resync();
+		expect(timerState(s.db)).toEqual({ entry_id: id, heartbeat_at: s.ctx.now() });
+		expect(s.changes).toEqual([id]);
+		s.timer.stop();
+		expect(getEntry(s.db, id)?.ended_at).toBe(s.ctx.now());
 	});
 });
 

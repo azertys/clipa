@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { csv, csvField, exportFileName, hours, reportCsv } from "./export";
+import { csv, csvField, entriesCsv, exportFileName, hours, reportCsv } from "./export";
+import type { EntryWithTags } from "./types";
 import type { Report } from "./reports";
 
 const at = (hhmm: string) => Date.parse(`2026-10-26T${hhmm}:00+02:00`);
@@ -15,6 +16,10 @@ describe("CSV", () => {
 
 	test("a table has a BOM, CRLF line ends and a final line end", () => {
 		expect(csv(["a", "b"], [["1", "x,y"]])).toBe('﻿a,b\r\n1,"x,y"\r\n');
+	});
+
+	test("columns named as quoted are always quoted, the header never", () => {
+		expect(csv(["a", "note"], [["1", "x"]], ["note"])).toBe('﻿a,note\r\n1,"x"\r\n');
 	});
 
 	test("hours have two decimals", () => {
@@ -73,5 +78,38 @@ describe("report tables", () => {
 		expect(lines("days")[1]).toBe("2026-10-26,2:00,2.00,4:00,4.00,2:00,2.00");
 		expect(lines("tags").slice(1, 3)).toEqual(["Work,1:30,1.50", "Untagged,0:30,0.50"]);
 		expect(lines("apps")[1]).toBe("Code,2:00,2.00");
+	});
+});
+
+describe("entries table (spec section 9)", () => {
+	const sync = { created_at: 0, updated_at: 0, deleted_at: null, device_id: "a" };
+	const entry = (start: string, end: string | null, note: string, tagIds: string[]): EntryWithTags => ({
+		id: start,
+		started_at: Date.parse(start),
+		ended_at: end === null ? null : Date.parse(end),
+		note,
+		tagIds,
+		...sync,
+	});
+	const names: Record<string, string> = { t1: "Work", t2: "Client, Inc" };
+	const opts = { tzid: "Europe/Bucharest", now: Date.parse("2026-10-26T12:00:00+02:00"), tagName: (id: string) => names[id] };
+
+	test("local times with the offset, tags with ';', the note quoted", () => {
+		const text = entriesCsv([entry("2026-10-26T09:00:00+02:00", "2026-10-26T10:30:00+02:00", 'Fix "login"', ["t1", "t2"])], opts);
+		expect(text).toBe(
+			"﻿date,start,end,duration_hm,duration_hours,tags,note\r\n" +
+				'2026-10-26,2026-10-26T09:00:00+02:00,2026-10-26T10:30:00+02:00,1:30,1.50,"Work;Client, Inc","Fix ""login"""\r\n',
+		);
+	});
+
+	test("the date is the local date of the start, across midnight and DST", () => {
+		const text = entriesCsv([entry("2026-10-24T22:00:00Z", "2026-10-25T03:00:00Z", "", [])], opts);
+		// 01:00 on 25 Oct local (+03:00) to 05:00 local, after the change to +02:00: 5 hours.
+		expect(text.split("\r\n")[1]).toBe('2026-10-25,2026-10-25T01:00:00+03:00,2026-10-25T05:00:00+02:00,5:00,5.00,,""');
+	});
+
+	test("a running entry has no end and counts up to now", () => {
+		const text = entriesCsv([entry("2026-10-26T11:15:00+02:00", null, "", [])], opts);
+		expect(text.split("\r\n")[1]).toBe('2026-10-26,2026-10-26T11:15:00+02:00,,0:45,0.75,,""');
 	});
 });

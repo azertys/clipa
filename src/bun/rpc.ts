@@ -1,11 +1,14 @@
 import type { Database } from "bun:sqlite";
-import { BrowserView, ContextMenu, Utils, type ApplicationMenuItemConfig } from "electrobun/main";
+import { BrowserView, ContextMenu, Updater, Utils, type ApplicationMenuItemConfig } from "electrobun/main";
+import { existsSync } from "node:fs";
+import { backupFileName } from "../../core/backup";
 import { recentCombos } from "../../core/entries";
-import { exportFileName, reportCsv } from "../../core/export";
+import { entriesCsv, exportFileName, reportCsv } from "../../core/export";
 import { localDate } from "../../core/time";
 import { strings } from "../mainview/strings";
-import type { AppInfo, ClipaRPC, UiStart } from "../shared/rpc-schema";
+import type { AppInfo, ClipaRPC, UiStart, UpdateCheck } from "../shared/rpc-schema";
 import { listAppsByName } from "./db/activity";
+import { exportBackup, importBackup, parseBackupFile } from "./db/backup";
 import { getEntry, listEntries, recentEntries, saveEntry } from "./db/entries";
 import {
 	deleteEventOccurrence,
@@ -15,11 +18,12 @@ import {
 	liveExceptions,
 	saveNewEvent,
 } from "./db/events";
-import type { WriteContext } from "./db/repo";
+import { AppError, type WriteContext } from "./db/repo";
 import { loadReport } from "./db/reports";
-import { readSettings, writeSettings } from "./db/settings";
+import { forgetSettings, readSettings, writeSettings } from "./db/settings";
 import { deleteTag, listTags, saveTag } from "./db/tags";
 import type { NativeSystem, NativeTracker } from "./native/tracker";
+import type { Backups } from "./services/backups";
 import { writeNewFile } from "./services/files";
 import { EXCLUDED_KEY } from "./services/sampler";
 import type { TimerService } from "./services/timer";
@@ -34,6 +38,9 @@ const EDIT_MENU: ApplicationMenuItemConfig[] = [
 	{ role: "selectAll" },
 ];
 
+/** The view gives up on a request after 10 s; the update check must answer before that. */
+const UPDATE_CHECK_MS = 9_000;
+
 /** System Settings → Privacy & Security → Accessibility. */
 const ACCESSIBILITY_SETTINGS = "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility";
 
@@ -44,6 +51,7 @@ export type AppContext = {
 	tracking: Tracking;
 	tracker: NativeTracker;
 	system: NativeSystem;
+	backups: Backups;
 	info: AppInfo;
 	/** Returns and clears what the view must show when it is ready. */
 	takeUiStart(): UiStart;
@@ -51,13 +59,24 @@ export type AppContext = {
 	setDraft(draft: { note: string; tagIds: string[] }): void;
 	/** Entries or tags changed from the view. The tray menu reloads. */
 	onDataChanged(): void;
+	/** Downloads the update in the background and restarts into it. */
+	installUpdate(): void;
 };
 
 export function createRpc(app: AppContext) {
-	const { db, ctx, timer, tracking, tracker, system } = app;
+	const { db, ctx, timer, tracking, tracker, system, backups } = app;
 	const changed = <T>(value: T): T => {
 		app.onDataChanged();
 		return value;
+	};
+	/** Today's database copy; a failure shows as `code` in the view. */
+	const dailyBackup = (code: string) => {
+		try {
+			backups.daily();
+		} catch (error) {
+			console.error("[clipa] backup failed:", error);
+			throw new AppError(code);
+		}
 	};
 
 	return BrowserView.defineRPC<ClipaRPC>({
@@ -100,7 +119,19 @@ export function createRpc(app: AppContext) {
 
 				settingsGet: () => readSettings(db),
 				// The tray reads the settings (menu bar timer).
-				settingsSet: (patch) => changed(writeSettings(db, patch)),
+				settingsSet: (patch) => {
+					const settings = writeSettings(db, patch);
+					// Turning automatic backup on makes today's copy now. If it fails, it stays off.
+					if (patch.autoBackup) {
+						try {
+							dailyBackup("BACKUP_FAILED");
+						} catch (error) {
+							writeSettings(db, { autoBackup: false });
+							throw error;
+						}
+					}
+					return changed(settings);
+				},
 				revealDatabase: () => {
 					Utils.showItemInFolder(app.info.dbPath);
 					return true as const;
@@ -158,6 +189,85 @@ export function createRpc(app: AppContext) {
 					);
 					if (paths.length > 0) Utils.showItemInFolder(paths[paths.length - 1]);
 					return { paths };
+				},
+
+				backupExport: ({ tzid }) => {
+					const backup = exportBackup(db, ctx, readSettings(db).exportAppData);
+					const name = backupFileName(localDate(ctx.now(), tzid));
+					const path = writeNewFile(Utils.paths.downloads, name, JSON.stringify(backup));
+					Utils.showItemInFolder(path);
+					return { path };
+				},
+				entriesExportCsv: ({ tzid, range, ids }) => {
+					const now = ctx.now();
+					const keep = ids ? new Set(ids) : null;
+					const entries = listEntries(db, range?.from ?? 0, range?.to ?? Number.MAX_SAFE_INTEGER)
+						.filter((e) => !keep || keep.has(e.id))
+						.reverse();
+					const tagNames = new Map(listTags(db).map((t) => [t.id, t.name]));
+					const text = entriesCsv(entries, { tzid, now, tagName: (id) => tagNames.get(id) ?? id });
+					// The range's days, or for all entries the days of the first and the last.
+					const first = range?.from ?? entries[0]?.started_at ?? now;
+					const last = range ? range.to - 1 : (entries.at(-1)?.started_at ?? now);
+					const name = exportFileName("entries", localDate(first, tzid), localDate(last, tzid));
+					const path = writeNewFile(Utils.paths.downloads, name, text);
+					Utils.showItemInFolder(path);
+					return { path };
+				},
+				backupImport: ({ json }) => {
+					const backup = parseBackupFile(json);
+					// No import without the copy (spec section 9).
+					let copy: string;
+					try {
+						copy = backups.beforeImport();
+					} catch (error) {
+						console.error("[clipa] copy before import failed:", error);
+						throw new AppError("BACKUP_FAILED");
+					}
+					const summary = importBackup(db, ctx, backup, copy);
+					console.log(
+						`[clipa] import: ${summary.added} added, ${summary.updated} updated, ${summary.skipped} skipped, copy at ${summary.backupPath}`,
+					);
+					// Tags may have changed, and the running entry with them.
+					forgetSettings(db);
+					timer.resync();
+					return changed(summary);
+				},
+				backupStatus: () => backups.status(),
+				backupChooseFolder: async () => {
+					const [folder] = await Utils.openFileDialog({
+						startingFolder: existsSync(backups.folder()) ? backups.folder() : "~/",
+						canChooseFiles: false,
+						canChooseDirectory: true,
+						allowsMultipleSelection: false,
+					});
+					// The dialog blocked this process; that time is not sleep (D47).
+					tracking.sampler.resume();
+					if (!folder) return null;
+					const previous = readSettings(db).backupFolder;
+					writeSettings(db, { backupFolder: folder });
+					try {
+						dailyBackup("BACKUP_FOLDER_FAILED");
+					} catch (error) {
+						writeSettings(db, { backupFolder: previous });
+						throw error;
+					}
+					return readSettings(db);
+				},
+				updateCheck: async (): Promise<UpdateCheck> => {
+					const local = await Updater.getLocalInfo();
+					if (local.channel === "dev" || !local.baseUrl) return { state: "unavailable", version: local.version };
+					const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), UPDATE_CHECK_MS));
+					const info = await Promise.race([Updater.checkForUpdate(), timeout]);
+					if (!info) return { state: "error", version: local.version, message: "timeout" };
+					if (info.error) return { state: "error", version: local.version, message: info.error };
+					return info.updateAvailable
+						? { state: "available", version: local.version, latest: info.version }
+						: { state: "current", version: local.version };
+				},
+				updateInstall: () => {
+					app.installUpdate();
+					return true as const;
 				},
 			},
 			messages: {

@@ -33,6 +33,7 @@ export const strings = {
 		save: "Save",
 		delete: "Delete",
 		close: "Close",
+		ok: "OK",
 		noNote: "No note",
 		now: "now",
 	},
@@ -180,6 +181,8 @@ export const strings = {
 		apps: (n: number) => `${n} ${n === 1 ? "app" : "apps"}`,
 		continue: "Continue",
 		edit: "Edit",
+		exportCsv: "Export CSV",
+		exported: (name: string) => `Saved ${name} in Downloads.`,
 	},
 
 	editor: {
@@ -253,6 +256,28 @@ export const strings = {
 		data: "Data and backup",
 		database: "Database",
 		showInFinder: "Show in Finder",
+		autoBackup: "Automatic backup",
+		autoBackupHint: (folder: string, last: string | null) =>
+			`Daily, keeps the last 14 copies in ${folder}.` + (last ? ` Last copy: ${last}.` : ""),
+		chooseFolder: "Choose folder…",
+		exportAll: "Export all data",
+		exportAllHint: "All entries as CSV, or a full backup as JSON.",
+		exportAppData: "App data in the JSON backup",
+		exportAppDataHint: "Apps and window titles. The file is smaller without them.",
+		exported: (name: string) => `Saved ${name} in Downloads.`,
+		importBackup: "Import a backup",
+		importBackupHint: "Merges a Clipa JSON backup into this database. Clipa copies the database first.",
+		importButton: "Import…",
+		updates: "Updates",
+		version: (version: string) => `Clipa ${version}`,
+		checkUpdates: "Check for updates",
+		updateCurrent: "Clipa is up to date.",
+		updateAvailable: (version: string) => `Clipa ${version} is available.`,
+		updateUnavailable: "This build does not check for updates.",
+		updateError: "Clipa could not check for updates. Try again later.",
+		installUpdate: "Install and restart",
+		updateDownloading: "Downloading the update. Clipa restarts when it is ready.",
+		updateFailed: (message: string) => `The update failed: ${message}`,
 	},
 
 	reports: {
@@ -324,6 +349,18 @@ export const strings = {
 	},
 
 	dialogs: {
+		importTitle: "Import finished",
+		importCounts: (added: number, updated: number, skipped: number) =>
+			`${added} added, ${updated} updated, ${skipped} skipped (rows).`,
+		importMerged: (n: number) =>
+			n === 1
+				? "1 imported tag has the name of a tag here. Its entries now use that tag."
+				: `${n} imported tags have the names of tags here. Their entries now use those tags.`,
+		importClosed: (n: number) =>
+			n === 1
+				? "1 imported entry was running. A timer runs here, so Clipa stopped it."
+				: `${n} imported entries were running. A timer runs here, so Clipa stopped them.`,
+		importCopy: (path: string) => `The database from before the import is in ${path}.`,
 		quitTitle: "Stop the timer and quit?",
 		quitMessage: "The timer is running.",
 		quitStop: "Stop and quit",
@@ -354,6 +391,10 @@ export const strings = {
 		EVENT_NOT_FOUND: "This event no longer exists.",
 		REPORT_RANGE_INVALID: "The end date must be on or after the start date.",
 		IDLE_NOT_PENDING: "This idle time was already handled.",
+		BACKUP_INVALID: "This file is not a Clipa backup, or it is damaged.",
+		BACKUP_VERSION: "This backup is from a newer version of Clipa. Update Clipa, then import it.",
+		BACKUP_FAILED: "Clipa could not copy the database to the backup folder.",
+		BACKUP_FOLDER_FAILED: "Clipa cannot write to this folder. Choose another one.",
 		unknown: "Something went wrong.",
 	} as Record<string, string>,
 };

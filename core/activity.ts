@@ -61,6 +61,16 @@ export class Segmenter {
 		return writes;
 	}
 
+	/**
+	 * The event loop was blocked by a native dialog in Clipa, and the system did not sleep. The
+	 * open segment (Clipa) runs on to `at`, and the next sample reports no gap.
+	 */
+	resume(at: number): void {
+		if (this.lastSampleAt === null) return;
+		if (this.open) this.open.end = Math.max(this.open.end, at);
+		this.lastSampleAt = at;
+	}
+
 	/** The open segment, for live totals. */
 	current(): Segment | null {
 		return this.open ? { ...this.open } : null;

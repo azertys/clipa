@@ -1,7 +1,8 @@
 // CSV export (spec sections 7 and 9). RFC 4180: comma separated, CRLF line ends, fields with a
 // comma, quote or line break in double quotes. A UTF-8 byte order mark lets Excel read non-ASCII text.
 import type { Report } from "./reports";
-import { formatDuration, isoLocal } from "./time";
+import { formatDuration, isoLocal, localDate } from "./time";
+import type { EntryWithTags } from "./types";
 
 const BOM = "﻿";
 
@@ -10,8 +11,11 @@ export function csvField(value: string | number | boolean, quote = false): strin
 	return quote || /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
-export function csv(header: string[], rows: (string | number | boolean)[][]): string {
-	return BOM + [header, ...rows].map((row) => row.map((v) => csvField(v)).join(",")).join("\r\n") + "\r\n";
+/** A CSV table. Columns named in `quoted` are always in double quotes (not the header). */
+export function csv(header: string[], rows: (string | number | boolean)[][], quoted: string[] = []): string {
+	const always = header.map((h) => quoted.includes(h));
+	const lines = [header.map((h) => csvField(h)), ...rows.map((row) => row.map((v, i) => csvField(v, always[i])))];
+	return BOM + lines.map((fields) => fields.join(",")).join("\r\n") + "\r\n";
 }
 
 /** Hours with two decimals, for spreadsheets: 1:30 → "1.50". */
@@ -90,6 +94,32 @@ export function reportCsv(
 				report.apps.map((a) => [a.name, formatDuration(a.ms), hours(a.ms)]),
 			);
 	}
+}
+
+/**
+ * Entries as CSV (spec section 9). Local times with the offset, tags separated by ";", the note
+ * always quoted. A running entry has no end and counts up to now.
+ */
+export function entriesCsv(
+	entries: EntryWithTags[],
+	opts: { tzid: string; now: number; tagName: (id: string) => string },
+): string {
+	return csv(
+		["date", "start", "end", "duration_hm", "duration_hours", "tags", "note"],
+		entries.map((e) => {
+			const ms = (e.ended_at ?? opts.now) - e.started_at;
+			return [
+				localDate(e.started_at, opts.tzid),
+				isoLocal(e.started_at, opts.tzid),
+				e.ended_at === null ? "" : isoLocal(e.ended_at, opts.tzid),
+				formatDuration(ms),
+				hours(ms),
+				e.tagIds.map(opts.tagName).join(";"),
+				e.note,
+			];
+		}),
+		["note"],
+	);
 }
 
 /** A file name for an export: clipa-events-2026-10-01_2026-10-31.csv (both dates included). */

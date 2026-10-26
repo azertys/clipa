@@ -57,6 +57,9 @@ export function readSettings(db: Database): Settings {
 		noTitleApps: strings(getSetting(db, "no_title_apps", [])),
 		excludedApps: strings(getSetting(db, "excluded_apps", [])),
 		activityDays: getSetting<ActivityDays>(db, "activity_days", 90),
+		autoBackup: getSetting(db, "auto_backup", true),
+		backupFolder: getSetting<string | null>(db, "backup_folder", null),
+		exportAppData: getSetting(db, "export_app_data", true),
 	} satisfies Settings;
 	cache.set(db, settings);
 	return settings;
@@ -78,5 +81,8 @@ export function writeSettings(db: Database, patch: Partial<Settings>): Settings 
 	if (patch.activityDays !== undefined && ACTIVITY_DAYS.includes(patch.activityDays)) {
 		setSetting(db, "activity_days", patch.activityDays);
 	}
+	if (patch.autoBackup !== undefined) setSetting(db, "auto_backup", patch.autoBackup);
+	if (patch.backupFolder !== undefined) setSetting(db, "backup_folder", patch.backupFolder || null);
+	if (patch.exportAppData !== undefined) setSetting(db, "export_app_data", patch.exportAppData);
 	return readSettings(db);
 }

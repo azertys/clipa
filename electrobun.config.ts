@@ -1,5 +1,14 @@
 import type { ElectrobunConfig } from "electrobun";
 
+// Signing and notarization turn on when their credentials are in the environment (docs/release.md).
+// Without them the build is unsigned, which is enough for this Mac.
+const env = process.env;
+const signed = Boolean(env.ELECTROBUN_DEVELOPER_ID);
+const notarized =
+	signed &&
+	(Boolean(env.ELECTROBUN_APPLEAPIKEY && env.ELECTROBUN_APPLEAPIISSUER) ||
+		Boolean(env.ELECTROBUN_APPLEID && env.ELECTROBUN_APPLEIDPASS && env.ELECTROBUN_TEAMID));
+
 export default {
 	app: {
 		name: "Clipa",
@@ -33,6 +42,9 @@ export default {
 			bundleCEF: false,
 			// Made from assets/logo/clipa-mark.svg by scripts/make-app-icon.swift.
 			icons: "assets/icon.iconset",
+			// Hutch also signs the nested Mach-O files, so the dylib gets the app's identity (spec section 8).
+			codesign: signed,
+			notarize: notarized,
 		},
 		linux: {
 			bundleCEF: false,

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { untrack } from "svelte";
+	import { onDestroy, untrack } from "svelte";
 	import { entryInterval, trackedMs } from "../../../core/entries";
 	import { overlappingIds } from "../../../core/overlap";
 	import { addLocalDays, formatDuration, localDate, localDateStart, MINUTE, startOfLocalDay } from "../../../core/time";
@@ -32,6 +32,9 @@
 	let toggled = $state<Record<string, boolean>>({});
 	let menu = $state<{ entry: EntryWithTags; anchor: HTMLElement } | null>(null);
 	let confirming = $state<EntryWithTags | null>(null);
+	let notice = $state<string | null>(null);
+	let noticeTimer: ReturnType<typeof setTimeout> | undefined;
+	onDestroy(() => clearTimeout(noticeTimer));
 
 	const today = $derived(startOfLocalDay(app.now, tz));
 	const from = $derived(addLocalDays(endDay, -(DAYS - 1), tz));
@@ -120,6 +123,16 @@
 		newDraft = null;
 	}
 
+	/** The shown entries (range, tag and search) as CSV, in Downloads. */
+	async function exportCsv() {
+		const ids = filtered.map((e) => e.id);
+		const saved = await app.attempt(() => api.entriesExportCsv({ tzid: tz, range: { from, to }, ids }));
+		if (!saved) return;
+		notice = strings.entries.exported(saved.path.split("/").pop() ?? saved.path);
+		clearTimeout(noticeTimer);
+		noticeTimer = setTimeout(() => (notice = null), 5000);
+	}
+
 	// The handlers below keep the entry in a plain variable. The menu and the dialog clear their
 	// state before the action runs, and a {@const} would then read null.
 	function rowActions(entry: EntryWithTags) {
@@ -142,6 +155,7 @@
 		{strings.entries.subtitle(rangeLong, filtered.length)}<strong>{formatDuration(total)}</strong>
 	{/snippet}
 	{#snippet aside()}
+		<Button icon="download" onclick={exportCsv}>{strings.entries.exportCsv}</Button>
 		<Button variant="primary" icon="plus" onclick={startNew}>{strings.entries.add}</Button>
 	{/snippet}
 </PageHeader>
@@ -165,6 +179,8 @@
 	</label>
 	<SearchField bind:value={query} />
 </div>
+
+{#if notice}<p class="notice" role="status">{notice}</p>{/if}
 
 {#if editing === "new" && newDraft}
 	<section class="new">
@@ -262,5 +278,10 @@
 		margin: 0;
 		color: var(--clipa-muted);
 		font-size: 13px;
+	}
+	.notice {
+		margin: -8px 0 0;
+		font-size: 12px;
+		color: var(--clipa-muted);
 	}
 </style>

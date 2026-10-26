@@ -85,6 +85,11 @@ export class Sampler {
 		if (gap) this.opts.onSleep?.(gap);
 	}
 
+	/** Call after a blocking native dialog: the time is not a sleep gap. */
+	resume(): void {
+		this.segmenter?.resume(this.opts.now());
+	}
+
 	flush(): void {
 		if (this.segmenter) this.write(this.segmenter.flush(this.opts.now()));
 	}

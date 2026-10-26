@@ -35,7 +35,7 @@ src/mainview/ui/ design tokens and components (from clipa-ui-svelte)
 src/shared/      the typed RPC contract
 native/macos/    Swift package that builds libclipanative.dylib
 assets/          logo, tray icons and the app icon set (see assets/README.md)
-docs/            decisions.md, open-questions.md
+docs/            decisions.md, open-questions.md, release.md
 ```
 
 ## Status
@@ -45,4 +45,5 @@ docs/            decisions.md, open-questions.md
 - M2 calendar and recurrence: done
 - M3 reports: done (one check on the Reports screen pending, see `docs/decisions.md`)
 - M4 app tracking and idle: done (see `docs/decisions.md` for what still needs a signed build)
-- M5 export/import/release: not started
+- M5 export/import/release: done except the signed DMG and the update host (see `docs/decisions.md`
+  and `docs/release.md`)

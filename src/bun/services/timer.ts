@@ -177,6 +177,11 @@ export class TimerService {
 		if (running) setSetting(this.db, KEPT_ON_QUIT, running.id);
 	}
 
+	/** The quit did not happen (a failed update restart): a later crash is a crash again. */
+	clearKeptOnQuit(): void {
+		setSetting(this.db, KEPT_ON_QUIT, null);
+	}
+
 	/**
 	 * Called once at app start. An open entry from a crash ends at the last
 	 * heartbeat. An open entry kept on quit continues.
@@ -208,6 +213,15 @@ export class TimerService {
 			return getEntry(this.db, running.id)!;
 		})();
 		return { kind: "recovered", entry, endedAt };
+	}
+
+	/** After an import: follow the running entry in the database (heartbeat, sampler, view). */
+	resync(): void {
+		const running = this.status();
+		this.writeTimerState(running?.id ?? null, running ? this.ctx.now() : null);
+		if (running) this.startHeartbeat();
+		else this.stopHeartbeat();
+		this.opts.onChange?.(running);
 	}
 
 	/** Stops the heartbeat interval. Does not change data. */

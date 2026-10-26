@@ -68,6 +68,24 @@ describe("Segmenter", () => {
 		expect(seg.current()).toMatchObject({ id: "s2", start: 10 * MIN });
 	});
 
+	test("resume after a blocking dialog: no gap, the open segment runs on", () => {
+		const seg = segmenter();
+		seg.sample(sample(0, "clipa"));
+		seg.sample(sample(10 * SEC, "clipa"));
+		seg.resume(2 * MIN);
+		const { writes, gap } = seg.sample(sample(2 * MIN + SEC, "clipa"));
+		expect(gap).toBeNull();
+		expect(writes).toEqual([]);
+		expect(seg.current()).toMatchObject({ id: "s1", start: 0, end: 2 * MIN + SEC });
+	});
+
+	test("resume before the first sample does nothing", () => {
+		const seg = segmenter();
+		seg.resume(MIN);
+		expect(seg.sample(sample(MIN + SEC, "code")).gap).toBeNull();
+		expect(seg.current()).toMatchObject({ start: MIN + SEC });
+	});
+
 	test("stop closes the open segment", () => {
 		const seg = segmenter();
 		seg.sample(sample(0, "code"));

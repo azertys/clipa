@@ -2,6 +2,7 @@
 // Types only: this module emits no runtime code.
 // Names are camelCase versions of the spec's dotted names (docs/decisions.md, D2).
 import type { RPCSchema } from "electrobun/view";
+import type { ImportSummary } from "../../core/backup";
 import type { Combo } from "../../core/entries";
 import type { ReportTable } from "../../core/export";
 import type { Report, TitleTime } from "../../core/reports";
@@ -44,6 +45,12 @@ export type Settings = {
 	excludedApps: string[];
 	/** Days to keep app activity; 0 = forever. */
 	activityDays: ActivityDays;
+	/** Copy the database once a day (spec section 9). */
+	autoBackup: boolean;
+	/** Folder for the database copies; null = <userData>/backups. */
+	backupFolder: string | null;
+	/** The JSON export includes apps and activity. */
+	exportAppData: boolean;
 };
 
 /** Days to keep app activity; 0 = forever. */
@@ -79,6 +86,18 @@ export type IdleAction = "keep" | "discard" | "discardStop";
 export type TrackingStatus = { nativeLoaded: boolean; titlePermission: boolean; launchAtLogin: LaunchAtLogin };
 
 export type LaunchAtLogin = "on" | "off" | "approval" | "unavailable";
+
+/** The automatic backup folder and the time of the newest daily copy. */
+export type BackupStatus = { folder: string; lastAt: number | null };
+
+/** Entries for the CSV export: a range (with only `ids` when given), or all entries when null. */
+export type EntriesExport = { tzid: string; range: { from: number; to: number } | null; ids?: string[] };
+
+/** "unavailable": a dev build, or no update host in this build. */
+export type UpdateCheck =
+	| { state: "current" | "unavailable"; version: string }
+	| { state: "available"; version: string; latest: string }
+	| { state: "error"; version: string; message: string };
 
 export type UiStart = { navigation: Navigation | null; recovery: RecoveryNotice | null; idle: IdlePrompt | null };
 
@@ -136,6 +155,20 @@ export type ClipaRPC = {
 			reportsGet: { params: ReportQuery; response: Report };
 			/** Writes report tables as CSV files to Downloads and shows them in Finder (D31). */
 			reportsExportCsv: { params: ReportQuery & { tables: ReportTable[] }; response: { paths: string[] } };
+
+			/** Writes the JSON backup (spec section 9) to Downloads and shows it in Finder. */
+			backupExport: { params: { tzid: string }; response: { path: string } };
+			/** Writes entries as CSV to Downloads and shows the file in Finder. */
+			entriesExportCsv: { params: EntriesExport; response: { path: string } };
+			/** Copies the database, then merges a JSON backup's text into it. */
+			backupImport: { params: { json: string }; response: ImportSummary };
+			backupStatus: { params: {}; response: BackupStatus };
+			/** Asks for the backup folder. Returns the new settings, or null when cancelled. */
+			backupChooseFolder: { params: {}; response: Settings | null };
+			/** The only network call: made when the user clicks "Check for updates" (open question 5). */
+			updateCheck: { params: {}; response: UpdateCheck };
+			/** Downloads the update, then restarts Clipa. A running timer continues after the restart. */
+			updateInstall: { params: {}; response: true };
 		};
 		messages: {
 			/** Alt+F4 on Windows. Quits as the tray's Quit does. */
@@ -155,6 +188,8 @@ export type ClipaRPC = {
 			navigate: Navigation;
 			/** An idle period ended (spec: idleDetected). */
 			idleDetected: IdlePrompt;
+			/** The update download or restart failed. */
+			updateFailed: { message: string };
 		};
 	}>;
 };

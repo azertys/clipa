@@ -1,8 +1,12 @@
 <script lang="ts">
+	import type { ImportSummary } from "../../../core/backup";
+	import { localDate } from "../../../core/time";
 	import type { Tag } from "../../../core/types";
-	import type { ActivityDays, Settings, TrackingStatus } from "../../shared/rpc-schema";
+	import type { ActivityDays, BackupStatus, Settings, TrackingStatus, UpdateCheck } from "../../shared/rpc-schema";
 	import ConfirmDialog from "../components/ConfirmDialog.svelte";
-	import { app, tagColor } from "../lib/app.svelte";
+	import ImportDialog from "../components/ImportDialog.svelte";
+	import { app, clock, tagColor, tz } from "../lib/app.svelte";
+	import { longDay } from "../lib/dates";
 	import { api } from "../lib/rpc";
 	import { strings } from "../strings";
 	import AppListInput from "../ui/AppListInput.svelte";
@@ -25,6 +29,17 @@
 	let knownApps = $state<{ key: string; name: string }[]>([]);
 	/** The idle threshold to restore when idle detection is turned back on. */
 	let lastIdleMinutes = $state(5);
+	let version = $state("");
+	let backup = $state<BackupStatus | null>(null);
+	/** "Saved … in Downloads." under the Data card, for a few seconds. */
+	let dataNotice = $state<string | null>(null);
+	let noticeTimer: ReturnType<typeof setTimeout> | undefined;
+	let importing = $state(false);
+	let summary = $state<ImportSummary | null>(null);
+	let fileInput: HTMLInputElement;
+	let update = $state<UpdateCheck | null>(null);
+	let checking = $state(false);
+	let installing = $state(false);
 
 	const IDLE_CHOICES = [1, 2, 3, 5, 10, 15, 20, 30, 45, 60];
 	const KEEP_CHOICES: ActivityDays[] = [30, 90, 365, 0];
@@ -32,17 +47,102 @@
 		days === 0 ? strings.settings.forever : days === 365 ? strings.settings.oneYear : strings.settings.days(days);
 
 	$effect(() => {
-		void api.appInfo({}).then((info) => (dbPath = info.dbPath));
+		void api.appInfo({}).then((info) => {
+			dbPath = info.dbPath;
+			version = info.version;
+		});
+		void refreshBackup();
 		void api.appsList({}).then((list) => (knownApps = list));
 		void refreshStatus();
 		// Coming back from System Settings: the permission may have changed.
 		window.addEventListener("focus", refreshStatus);
-		return () => window.removeEventListener("focus", refreshStatus);
+		return () => {
+			window.removeEventListener("focus", refreshStatus);
+			clearTimeout(noticeTimer);
+		};
 	});
 
 	$effect(() => {
 		if (app.settings.idleMinutes > 0) lastIdleMinutes = app.settings.idleMinutes;
 	});
+
+	const backupHint = $derived.by(() => {
+		if (!backup) return "";
+		const last = backup.lastAt === null ? null : `${longDay(localDate(backup.lastAt, tz))}, ${clock(backup.lastAt)}`;
+		return strings.settings.autoBackupHint(backup.folder, last);
+	});
+
+	const updateText = $derived.by(() => {
+		const current = strings.settings.version(version);
+		if (installing) return strings.settings.updateDownloading;
+		switch (update?.state) {
+			case "current":
+				return `${current}. ${strings.settings.updateCurrent}`;
+			case "available":
+				return strings.settings.updateAvailable(update.latest);
+			case "unavailable":
+				return `${current}. ${strings.settings.updateUnavailable}`;
+			case "error":
+				return `${current}. ${strings.settings.updateError}`;
+			default:
+				return current;
+		}
+	});
+
+	async function refreshBackup() {
+		backup = (await app.attempt(() => api.backupStatus({}))) ?? null;
+	}
+
+	async function setAutoBackup(on: boolean) {
+		await set({ autoBackup: on });
+		await refreshBackup();
+	}
+
+	async function chooseFolder() {
+		const settings = await app.attempt(() => api.backupChooseFolder({}));
+		if (settings) app.settings = settings;
+		await refreshBackup();
+	}
+
+	function showSaved(path: string) {
+		dataNotice = strings.settings.exported(path.split("/").pop() ?? path);
+		clearTimeout(noticeTimer);
+		noticeTimer = setTimeout(() => (dataNotice = null), 5000);
+	}
+
+	async function exportJson() {
+		const saved = await app.attempt(() => api.backupExport({ tzid: tz }));
+		if (saved) showSaved(saved.path);
+	}
+
+	async function exportCsv() {
+		const saved = await app.attempt(() => api.entriesExportCsv({ tzid: tz, range: null }));
+		if (saved) showSaved(saved.path);
+	}
+
+	/** The file comes from a file field: WKWebView shows the open panel without blocking the main process. */
+	async function importFile(e: Event & { currentTarget: HTMLInputElement }) {
+		const file = e.currentTarget.files?.[0];
+		// Clear the field so that the same file can be chosen again.
+		e.currentTarget.value = "";
+		if (!file) return;
+		importing = true;
+		const result = await app.attempt(async () => api.backupImport({ json: await file.text() }));
+		importing = false;
+		if (!result) return;
+		summary = result;
+		await Promise.all([app.reloadTags(), refreshBackup()]);
+	}
+
+	async function checkUpdates() {
+		checking = true;
+		update = (await app.attempt(() => api.updateCheck({}))) ?? null;
+		checking = false;
+	}
+
+	async function installUpdate() {
+		if (await app.attempt(() => api.updateInstall({}))) installing = true;
+	}
 
 	async function refreshStatus() {
 		status = (await app.attempt(() => api.trackingStatus({}))) ?? null;
@@ -338,8 +438,62 @@
 				<Button size="sm" onclick={() => api.revealDatabase({})}>{strings.settings.showInFinder}</Button>
 			{/snippet}
 		</SettingsRow>
+		<SettingsRow label={strings.settings.autoBackup} description={backupHint}>
+			{#snippet control()}
+				<Button size="sm" onclick={chooseFolder}>{strings.settings.chooseFolder}</Button>
+				<Toggle label={strings.settings.autoBackup} checked={app.settings.autoBackup} onchange={setAutoBackup} />
+			{/snippet}
+		</SettingsRow>
+		<SettingsRow label={strings.settings.exportAll} description={strings.settings.exportAllHint}>
+			{#snippet control()}
+				<Button size="sm" icon="download" onclick={exportCsv}>CSV</Button>
+				<Button size="sm" icon="download" onclick={exportJson}>JSON</Button>
+			{/snippet}
+		</SettingsRow>
+		<SettingsRow label={strings.settings.exportAppData} description={strings.settings.exportAppDataHint}>
+			{#snippet control()}
+				<Toggle
+					label={strings.settings.exportAppData}
+					checked={app.settings.exportAppData}
+					onchange={(v) => set({ exportAppData: v })}
+				/>
+			{/snippet}
+		</SettingsRow>
+		<SettingsRow label={strings.settings.importBackup} description={strings.settings.importBackupHint}>
+			{#snippet control()}
+				<input
+					bind:this={fileInput}
+					type="file"
+					accept=".json,application/json"
+					class="clipa-sr-only"
+					tabindex="-1"
+					aria-hidden="true"
+					onchange={importFile}
+				/>
+				<Button size="sm" disabled={importing} onclick={() => fileInput.click()}>{strings.settings.importButton}</Button>
+			{/snippet}
+		</SettingsRow>
+		{#if dataNotice}<p class="help notice" role="status">{dataNotice}</p>{/if}
+	</Card>
+
+	<Card title={strings.settings.updates}>
+		<SettingsRow label={strings.settings.updates} description={updateText}>
+			{#snippet control()}
+				{#if update?.state === "available"}
+					<Button size="sm" variant="primary" disabled={installing} onclick={installUpdate}>
+						{strings.settings.installUpdate}
+					</Button>
+				{:else}
+					<Button size="sm" disabled={checking} onclick={checkUpdates}>{strings.settings.checkUpdates}</Button>
+				{/if}
+			{/snippet}
+		</SettingsRow>
 	</Card>
 </div>
+
+{#if summary}
+	<ImportDialog {summary} onclose={() => (summary = null)} />
+{/if}
 
 {#if deleting}
 	<ConfirmDialog message={strings.settings.confirmDeleteTag(deleting.name)} onanswer={answerDelete} />
@@ -361,6 +515,9 @@
 		margin: -4px 0 8px;
 		font-size: 12px;
 		color: var(--clipa-muted);
+	}
+	.notice {
+		margin: 8px 0 0;
 	}
 	.tagrow {
 		display: flex;

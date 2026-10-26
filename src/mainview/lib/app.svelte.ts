@@ -27,6 +27,9 @@ class AppState {
 		noTitleApps: [],
 		excludedApps: [],
 		activityDays: 90,
+		autoBackup: true,
+		backupFolder: null,
+		exportAppData: true,
 	});
 	/** Updated every second, for elapsed time. */
 	now = $state(Date.now());
@@ -183,5 +186,6 @@ onMessage("dataChanged", () => {
 });
 onMessage("navigate", (nav) => app.navigate(nav));
 onMessage("idleDetected", (prompt) => (app.idle = prompt));
+onMessage("updateFailed", ({ message }) => (app.error = strings.settings.updateFailed(message)));
 
 setInterval(() => (app.now = Date.now()), 1000);

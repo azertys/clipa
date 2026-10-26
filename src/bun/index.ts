@@ -5,14 +5,15 @@ import { join } from "node:path";
 import type { Combo } from "../../core/entries";
 import type { EntryWithTags } from "../../core/types";
 import { strings } from "../mainview/strings";
-import type { Navigation, RecoveryNotice } from "../shared/rpc-schema";
+import type { IdlePrompt, Navigation, RecoveryNotice } from "../shared/rpc-schema";
 import { openDatabase } from "./db/database";
 import type { WriteContext } from "./db/repo";
 import { deviceId, readSettings } from "./db/settings";
-import { dylibPath, loadMacTracker } from "./native/macos";
-import { nullTracker, type NativeTracker } from "./native/tracker";
+import { dylibPath, loadMac } from "./native/macos";
+import { nullSystem, nullTracker, type NativeSystem, type NativeTracker } from "./native/tracker";
 import { createRpc, type ClipaBunRpc } from "./rpc";
 import { SHORT_ENTRY_MS, TimerService } from "./services/timer";
+import { Tracking } from "./services/tracking";
 import { ClipaTray } from "./tray";
 
 const DEV_SERVER_URL = "http://localhost:5173";
@@ -25,18 +26,18 @@ const ctx: WriteContext = { deviceId: deviceId(db), now: Date.now };
 console.log(`[clipa] db=${dbPath}`);
 
 // --- Native library --------------------------------------------------------
-// The sampler and idle monitor use it from M4.
+// Without it the timer works and nothing is sampled (nullTracker).
 let tracker: NativeTracker = nullTracker;
+let system: NativeSystem = nullSystem;
 let nativeLoaded = false;
 if (process.platform === "darwin") {
 	try {
-		tracker = loadMacTracker(dylibPath(PATHS.RESOURCES_FOLDER));
+		({ tracker, system } = loadMac(dylibPath(PATHS.RESOURCES_FOLDER)));
 		nativeLoaded = true;
 	} catch (error) {
 		console.error("[clipa] native library failed to load:", error);
 	}
 }
-void tracker;
 
 // --- Timer -----------------------------------------------------------------
 let rpc: ClipaBunRpc | null = null;
@@ -63,9 +64,25 @@ const timer = new TimerService({
 	minEntryMs: () => (readSettings(db).discardShort ? SHORT_ENTRY_MS : 0),
 	onChange: (entry: EntryWithTags | null) => {
 		draft = null;
+		// The sampler and idle monitor follow the timer. `tracking` exists before any timer change.
+		tracking.sync(entry);
 		tray?.refresh();
 		send("timerChanged", { entry });
 		send("dataChanged", {});
+	},
+});
+
+const tracking = new Tracking({
+	db,
+	ctx,
+	tracker,
+	timer,
+	settings: () => readSettings(db),
+	excludedName: strings.tracking.excluded,
+	onPrompt: (prompt: IdlePrompt) => {
+		// The question is in the window (a native dialog would block this process, D11).
+		if (mainWindow) send("idleDetected", prompt);
+		else openMainWindow();
 	},
 });
 
@@ -101,9 +118,12 @@ function openMainWindow(navigation?: Navigation) {
 		db,
 		ctx,
 		timer,
+		tracking,
+		tracker,
+		system,
 		info: { version: "0.1.0", deviceId: ctx.deviceId, dbPath, nativeLoaded },
 		takeUiStart: () => {
-			const start = { navigation: pendingNavigation, recovery: pendingRecovery };
+			const start = { navigation: pendingNavigation, recovery: pendingRecovery, idle: tracking.idle.question() };
 			console.log(`[clipa] view ready, recovery notice: ${start.recovery ? "yes" : "no"}`);
 			pendingNavigation = null;
 			pendingRecovery = null;
@@ -139,6 +159,7 @@ let quitConfirmed = false;
 
 Electrobun.events.on("before-quit", (event) => {
 	if (quitConfirmed || !timer.status()) {
+		tracking.sampler.stop();
 		timer.dispose();
 		return;
 	}
@@ -164,6 +185,8 @@ async function confirmQuit() {
 }
 
 // --- Start -----------------------------------------------------------------
+const cleanup = tracking.startup();
+console.log(`[clipa] tracking: kept ${cleanup.keptIdle} idle periods, deleted ${cleanup.purged} old activity rows`);
 // Utils.showMessageBox is a synchronous FFI call: it blocks this event loop
 // (heartbeat, RPC, tray) until answered. So the recovery dialog is in the view.
 const recovery = timer.recover();

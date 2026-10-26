@@ -34,7 +34,22 @@ export type Settings = {
 	hour12: boolean;
 	/** Timers shorter than 1 minute are not saved. */
 	discardShort: boolean;
+	/** Minutes without input before Clipa asks about idle time; 0 = off. */
+	idleMinutes: number;
+	/** Record the frontmost app while the timer runs. */
+	trackApps: boolean;
+	/** Record window titles too (needs Accessibility permission). Off by default. */
+	recordTitles: boolean;
+	/** Bundle ids whose window titles are never recorded. */
+	noTitleApps: string[];
+	/** Bundle ids recorded as "Excluded". */
+	excludedApps: string[];
+	/** Days to keep app activity; 0 = forever. */
+	activityDays: ActivityDays;
 };
+
+/** Days to keep app activity; 0 = forever. */
+export type ActivityDays = 30 | 90 | 365 | 0;
 
 export type Screen = "today" | "entries" | "calendar" | "reports" | "settings";
 
@@ -54,7 +69,17 @@ export type OccurrenceRef = { eventId: string; originalStart: number; mode: Edit
 /** A report for [from, to). tzid is the device zone, for the per-day split. */
 export type ReportQuery = { from: number; to: number; tzid: string; includeAllDay: boolean };
 
-export type UiStart = { navigation: Navigation | null; recovery: RecoveryNotice | null };
+/** An idle period that ended: the view asks Keep / Discard / Discard and stop. */
+export type IdlePrompt = { id: string; entryId: string; start: number; end: number };
+
+export type IdleAction = "keep" | "discard" | "discardStop";
+
+/** Accessibility permission (window titles) and launch at login, for Settings. */
+export type TrackingStatus = { nativeLoaded: boolean; titlePermission: boolean; launchAtLogin: LaunchAtLogin };
+
+export type LaunchAtLogin = "on" | "off" | "approval" | "unavailable";
+
+export type UiStart = { navigation: Navigation | null; recovery: RecoveryNotice | null; idle: IdlePrompt | null };
 
 export type ClipaRPC = {
 	// Handled in the main process, called by the webview.
@@ -95,6 +120,18 @@ export type ClipaRPC = {
 			eventsEditOccurrence: { params: OccurrenceRef & { changes: Partial<EventFields> }; response: true };
 			eventsDeleteOccurrence: { params: OccurrenceRef; response: true };
 
+			idleResolve: { params: { id: string; action: IdleAction }; response: true };
+			trackingStatus: { params: {}; response: TrackingStatus };
+			/** Shows the macOS Accessibility prompt. Returns whether permission is granted now. */
+			trackingRequestPermission: { params: {}; response: boolean };
+			/** Opens System Settings at Privacy & Security → Accessibility. */
+			trackingOpenSettings: { params: {}; response: true };
+			launchAtLoginSet: { params: { on: boolean }; response: LaunchAtLogin };
+			/** Apps seen by the sampler, for the "Do not record" lists. */
+			appsList: { params: {}; response: { key: string; name: string }[] };
+			/** Time per app of the running entry, with the open segment. */
+			timerApps: { params: {}; response: { name: string; ms: number }[] };
+
 			reportsGet: { params: ReportQuery; response: Report };
 			/** Writes report tables as CSV files to Downloads and shows them in Finder (D31). */
 			reportsExportCsv: { params: ReportQuery & { tables: ReportTable[] }; response: { paths: string[] } };
@@ -110,6 +147,8 @@ export type ClipaRPC = {
 			/** Data changed outside the view (tray, recovery). The view reloads what it shows. */
 			dataChanged: {};
 			navigate: Navigation;
+			/** An idle period ended (spec: idleDetected). */
+			idleDetected: IdlePrompt;
 		};
 	}>;
 };

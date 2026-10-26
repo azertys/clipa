@@ -1,5 +1,7 @@
 import type { Database } from "bun:sqlite";
+import { planIdleDiscard } from "../../../core/activity";
 import type { EntryWithTags } from "../../../core/types";
+import { activityOfEntry, deleteActivity, getIdle, resolveIdle, writeActivity } from "../db/activity";
 import { deleteEntry, getEntry, runningEntry, setEntryTags } from "../db/entries";
 import { AppError, writeRow, type WriteContext } from "../db/repo";
 import { getSetting, setSetting } from "../db/settings";
@@ -113,6 +115,62 @@ export class TimerService {
 		else deleteEntry(this.db, this.ctx, id);
 	}
 
+	/**
+	 * "Discard" (stop = false) or "Discard and stop" (stop = true) for an ended idle period.
+	 * Splits or ends the entry, moves or deletes its activity, and resolves the period, in one
+	 * transaction. A running entry keeps running as the new entry after the idle time.
+	 */
+	discardIdle(periodId: string, stop: boolean): void {
+		const period = getIdle(this.db, periodId);
+		if (!period || period.resolution !== "pending" || period.ended_at === null) throw new AppError("IDLE_NOT_PENDING");
+		const entry = getEntry(this.db, period.entry_id);
+		const wasRunning = entry !== null && entry.deleted_at === null && entry.ended_at === null;
+		let running: EntryWithTags | null = null;
+		this.db.transaction(() => {
+			resolveIdle(this.db, period.id, "discarded");
+			if (!entry || entry.deleted_at !== null) return;
+			const plan = planIdleDiscard({
+				entry,
+				idle: { start: period.started_at, end: period.ended_at! },
+				activity: activityOfEntry(this.db, entry.id),
+				stop,
+				newId: () => Bun.randomUUIDv7(),
+			});
+			if (!plan) {
+				if (stop && wasRunning) this.removeOrClose(entry, this.ctx.now());
+				return;
+			}
+			const now = this.ctx.now();
+			// The first part closes before the second opens: one_running allows one open entry.
+			writeRow(this.db, this.ctx, "time_entries", {
+				...entry,
+				ended_at: plan.first.ended_at,
+				deleted_at: plan.first.deleted ? now : null,
+			});
+			let secondId: string | null = null;
+			if (plan.second) {
+				secondId = Bun.randomUUIDv7();
+				writeRow(this.db, this.ctx, "time_entries", {
+					id: secondId,
+					started_at: plan.second.started_at,
+					ended_at: plan.second.ended_at,
+					note: entry.note,
+				});
+				setEntryTags(this.db, this.ctx, secondId, entry.tagIds);
+			}
+			deleteActivity(this.db, plan.deletes);
+			for (const row of plan.upserts) writeActivity(this.db, { ...row, entry_id: row.entry_id || secondId! });
+			if (wasRunning) {
+				running = secondId && plan.second?.ended_at === null ? getEntry(this.db, secondId) : null;
+				this.writeTimerState(running?.id ?? null, running ? now : null);
+			}
+		})();
+		if (!wasRunning) return;
+		if (running) this.startHeartbeat();
+		else this.stopHeartbeat();
+		this.opts.onChange?.(running);
+	}
+
 	/** Called when the user quits with "Quit and keep running". */
 	markKeptOnQuit(): void {
 		const running = this.status();
@@ -159,6 +217,13 @@ export class TimerService {
 
 	beat(): void {
 		this.db.query("UPDATE timer_state SET heartbeat_at = ? WHERE id = 1 AND entry_id IS NOT NULL").run(this.ctx.now());
+	}
+
+	/** Ends a running entry at `at`, or deletes it when that leaves less than 1 s. */
+	private removeOrClose(entry: EntryWithTags, at: number) {
+		if (at - entry.started_at < MIN_ENTRY_MS) this.removeRunning(entry, at);
+		else writeRow(this.db, this.ctx, "time_entries", { ...entry, ended_at: at });
+		this.writeTimerState(null, null);
 	}
 
 	/** Soft-deletes the running entry. ended_at is set so no deleted row stays "running". */

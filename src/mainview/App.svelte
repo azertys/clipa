@@ -5,6 +5,7 @@
 	import { addLocalDays, startOfLocalDay, startOfLocalWeek } from "../../core/time";
 	import type { EntryWithTags } from "../../core/types";
 	import type { Screen } from "../shared/rpc-schema";
+	import IdleDialog from "./components/IdleDialog.svelte";
 	import RecoveryDialog from "./components/RecoveryDialog.svelte";
 	import { app, tz } from "./lib/app.svelte";
 	import { api } from "./lib/rpc";
@@ -41,6 +42,7 @@
 		const start = await api.uiReady({});
 		if (start.navigation) app.navigate(start.navigation);
 		app.recovery = start.recovery;
+		if (start.idle) app.idle = start.idle;
 	});
 
 	function onkeydown(e: KeyboardEvent) {
@@ -62,6 +64,8 @@
 
 {#if app.recovery}
 	<RecoveryDialog notice={app.recovery} onclose={() => (app.recovery = null)} />
+{:else if app.idle}
+	<IdleDialog prompt={app.idle} onclose={() => (app.idle = null)} />
 {/if}
 
 <AppShell flush={app.screen === "calendar"}>

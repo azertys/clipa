@@ -44,4 +44,5 @@ docs/            decisions.md, open-questions.md
 - M1 timer, entries, tags, tray: done (two manual UI checks pending, see `docs/decisions.md`)
 - M2 calendar and recurrence: done
 - M3 reports: done (one check on the Reports screen pending, see `docs/decisions.md`)
-- M4 tracking and idle, M5 export/import/release: not started
+- M4 app tracking and idle: done (see `docs/decisions.md` for what still needs a signed build)
+- M5 export/import/release: not started

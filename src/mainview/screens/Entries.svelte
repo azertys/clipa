@@ -177,6 +177,7 @@
 						{entry}
 						now={app.now}
 						overlap={overlaps.has(entry.id)}
+						showApps
 						action="more"
 						onopen={(e) => (editing = e.id)}
 						onmore={(e, anchor) => (menu = { entry: e, anchor })}

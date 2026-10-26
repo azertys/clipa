@@ -11,6 +11,7 @@
 		entry,
 		now,
 		overlap = false,
+		showApps = false,
 		action = "continue",
 		onopen,
 		oncontinue,
@@ -21,6 +22,8 @@
 		now: number;
 		/** Shows a warning: the entry shares time with another one */
 		overlap?: boolean;
+		/** Shows "3 apps" when the entry has recorded apps */
+		showApps?: boolean;
 		/** Trailing button: ▶ continue (Today) or ⋯ more (Entries) */
 		action?: "continue" | "more" | "none";
 		/** Click on the row body, for example to edit */
@@ -40,6 +43,9 @@
 			{#if overlap}<span class="warn" title={strings.entries.overlap}>⚠︎</span>{/if}
 			{note || strings.common.noNote}
 		</span>
+		{#if showApps && entry.appCount}
+			<span class="apps">{strings.entries.apps(entry.appCount)}</span>
+		{/if}
 		{#if tags.length}
 			<span class="tags">
 				{#each tags as tag (tag.id)}<TagChip {tag} />{/each}
@@ -101,6 +107,11 @@
 		color: var(--clipa-event);
 		font-style: normal;
 		margin-right: 4px;
+	}
+	.apps {
+		font-size: 12px;
+		color: var(--clipa-faint);
+		flex: none;
 	}
 	.tags {
 		display: inline-flex;

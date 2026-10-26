@@ -5,6 +5,7 @@ import { exportFileName, reportCsv } from "../../core/export";
 import { localDate } from "../../core/time";
 import { strings } from "../mainview/strings";
 import type { AppInfo, ClipaRPC, UiStart } from "../shared/rpc-schema";
+import { listAppsByName } from "./db/activity";
 import { getEntry, listEntries, recentEntries, saveEntry } from "./db/entries";
 import {
 	deleteEventOccurrence,
@@ -18,13 +19,22 @@ import type { WriteContext } from "./db/repo";
 import { loadReport } from "./db/reports";
 import { readSettings, writeSettings } from "./db/settings";
 import { deleteTag, listTags, saveTag } from "./db/tags";
+import type { NativeSystem, NativeTracker } from "./native/tracker";
 import { writeNewFile } from "./services/files";
+import { EXCLUDED_KEY } from "./services/sampler";
 import type { TimerService } from "./services/timer";
+import type { Tracking } from "./services/tracking";
+
+/** System Settings → Privacy & Security → Accessibility. */
+const ACCESSIBILITY_SETTINGS = "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility";
 
 export type AppContext = {
 	db: Database;
 	ctx: WriteContext;
 	timer: TimerService;
+	tracking: Tracking;
+	tracker: NativeTracker;
+	system: NativeSystem;
 	info: AppInfo;
 	/** Returns and clears what the view must show when it is ready. */
 	takeUiStart(): UiStart;
@@ -35,7 +45,7 @@ export type AppContext = {
 };
 
 export function createRpc(app: AppContext) {
-	const { db, ctx, timer } = app;
+	const { db, ctx, timer, tracking, tracker, system } = app;
 	const changed = <T>(value: T): T => {
 		app.onDataChanged();
 		return value;
@@ -102,6 +112,30 @@ export function createRpc(app: AppContext) {
 					deleteEventOccurrence(db, ctx, input);
 					return true as const;
 				},
+
+				idleResolve: ({ id, action }) => {
+					tracking.resolve(id, action);
+					return changed(true as const);
+				},
+				trackingStatus: () => ({
+					nativeLoaded: app.info.nativeLoaded,
+					titlePermission: tracker.hasTitlePermission(),
+					launchAtLogin: system.launchAtLogin(),
+				}),
+				trackingRequestPermission: () => {
+					tracker.requestTitlePermission();
+					return tracker.hasTitlePermission();
+				},
+				trackingOpenSettings: () => {
+					Utils.openExternal(ACCESSIBILITY_SETTINGS);
+					return true as const;
+				},
+				launchAtLoginSet: ({ on }) => system.setLaunchAtLogin(on),
+				appsList: () =>
+					listAppsByName(db)
+						.filter((a) => a.platform_key !== EXCLUDED_KEY)
+						.map((a) => ({ key: a.platform_key, name: a.display_name })),
+				timerApps: () => tracking.sampler.liveAppTimes(),
 
 				reportsGet: (query) => loadReport(db, query, ctx.now()),
 				reportsExportCsv: ({ tables, ...query }) => {

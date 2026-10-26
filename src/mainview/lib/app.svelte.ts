@@ -1,7 +1,7 @@
 // Shared view state: the running entry, tags, settings, the clock and navigation.
 import { formatClock } from "../../../core/time";
 import type { EntryWithTags, Tag } from "../../../core/types";
-import type { Navigation, RecoveryNotice, Screen, Settings } from "../../shared/rpc-schema";
+import type { IdlePrompt, Navigation, RecoveryNotice, Screen, Settings } from "../../shared/rpc-schema";
 import { errorText, strings } from "../strings";
 import { api, onMessage } from "./rpc";
 
@@ -22,6 +22,12 @@ class AppState {
 		weekStart: 1,
 		hour12: false,
 		discardShort: false,
+		idleMinutes: 5,
+		trackApps: true,
+		recordTitles: false,
+		noTitleApps: [],
+		excludedApps: [],
+		activityDays: 90,
 	});
 	/** Updated every second, for elapsed time. */
 	now = $state(Date.now());
@@ -30,6 +36,8 @@ class AppState {
 	error = $state<string | null>(null);
 	/** Set when the main process closed a running entry after a crash. */
 	recovery = $state<RecoveryNotice | null>(null);
+	/** An idle period waiting for Keep / Discard / Discard and stop. */
+	idle = $state<IdlePrompt | null>(null);
 
 	/** The timer's note and tags: the running entry's while it runs, the next entry's while stopped. */
 	note = $state("");
@@ -175,5 +183,6 @@ onMessage("dataChanged", () => {
 	void app.reloadTags();
 });
 onMessage("navigate", (nav) => app.navigate(nav));
+onMessage("idleDetected", (prompt) => (app.idle = prompt));
 
 setInterval(() => (app.now = Date.now()), 1000);

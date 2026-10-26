@@ -1,6 +1,7 @@
 import type { Database } from "bun:sqlite";
 import type { Tag, TagInput } from "../../../core/types";
 import { AppError, writeRow, type WriteContext } from "./repo";
+import { forgetSettings } from "./settings";
 
 export function listTags(db: Database): Tag[] {
 	return db.query("SELECT * FROM tags WHERE deleted_at IS NULL ORDER BY name COLLATE NOCASE").all() as Tag[];
@@ -45,6 +46,8 @@ export function deleteTag(db: Database, ctx: WriteContext, id: string): void {
 		if (!tag || tag.deleted_at !== null) return;
 		const now = ctx.now();
 		writeRow(db, ctx, "tags", { ...tag, deleted_at: now });
+		// The default tags drop deleted tags.
+		forgetSettings(db);
 		const links = db
 			.query("SELECT * FROM entry_tags WHERE tag_id = ? AND deleted_at IS NULL")
 			.all(id) as Record<string, unknown>[];

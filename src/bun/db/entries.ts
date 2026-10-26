@@ -9,12 +9,17 @@ const TAG_IDS = `(
 	WHERE et.entry_id = e.id AND et.deleted_at IS NULL AND t.deleted_at IS NULL
 ) AS tag_ids`;
 
-type EntryRow = TimeEntry & { tag_ids: string };
+// Number of apps the sampler recorded for an entry.
+const APP_COUNT = `(SELECT COUNT(DISTINCT a.app_id) FROM activity a WHERE a.entry_id = e.id) AS app_count`;
+
+type EntryRow = TimeEntry & { tag_ids: string; app_count?: number };
 
 function withTags(row: EntryRow | null): EntryWithTags | null {
 	if (!row) return null;
-	const { tag_ids, ...entry } = row;
-	return { ...entry, tagIds: JSON.parse(tag_ids) as string[] };
+	const { tag_ids, app_count, ...entry } = row;
+	const out: EntryWithTags = { ...entry, tagIds: JSON.parse(tag_ids) as string[] };
+	if (app_count !== undefined) out.appCount = app_count;
+	return out;
 }
 
 export function getEntry(db: Database, id: string): EntryWithTags | null {
@@ -33,7 +38,7 @@ export function runningEntry(db: Database): EntryWithTags | null {
 export function listEntries(db: Database, from: number, to: number): EntryWithTags[] {
 	const rows = db
 		.query(
-			`SELECT e.*, ${TAG_IDS} FROM time_entries e
+			`SELECT e.*, ${TAG_IDS}, ${APP_COUNT} FROM time_entries e
 			 WHERE e.deleted_at IS NULL AND e.started_at < ? AND (e.ended_at IS NULL OR e.ended_at > ?)
 			 ORDER BY e.started_at DESC`,
 		)

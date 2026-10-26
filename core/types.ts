@@ -23,8 +23,8 @@ export type TimeEntry = SyncColumns & {
 	note: string;
 };
 
-/** A time entry with its live tag ids, as the view sees it. */
-export type EntryWithTags = TimeEntry & { tagIds: string[] };
+/** A time entry with its live tag ids, as the view sees it. appCount: apps recorded (entry lists only). */
+export type EntryWithTags = TimeEntry & { tagIds: string[]; appCount?: number };
 
 export type CalendarEvent = SyncColumns & {
 	id: string;

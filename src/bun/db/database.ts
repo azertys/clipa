@@ -1,9 +1,13 @@
 import { Database } from "bun:sqlite";
 import m001 from "./migrations/001_init.sql" with { type: "text" };
+import m002 from "./migrations/002_activity_range.sql" with { type: "text" };
 
 // Ordered list. The index + 1 is the PRAGMA user_version after the migration.
 // Add new files as NNN_name.sql and append them here.
-export const MIGRATIONS: { name: string; sql: string }[] = [{ name: "001_init", sql: m001 }];
+export const MIGRATIONS: { name: string; sql: string }[] = [
+	{ name: "001_init", sql: m001 },
+	{ name: "002_activity_range", sql: m002 },
+];
 
 export function openDatabase(path: string): Database {
 	const db = new Database(path, { create: true, strict: true });

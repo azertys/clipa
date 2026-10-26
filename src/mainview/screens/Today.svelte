@@ -8,6 +8,7 @@
 	import { longDay } from "../lib/dates";
 	import { api } from "../lib/rpc";
 	import { strings } from "../strings";
+	import AppUsageList from "../ui/AppUsageList.svelte";
 	import Card from "../ui/Card.svelte";
 	import DayTimeline from "../ui/DayTimeline.svelte";
 	import EntryRow from "../ui/EntryRow.svelte";
@@ -18,6 +19,16 @@
 	let entries = $state<EntryWithTags[]>([]);
 	let instances = $state<Instance[]>([]);
 	let recent = $state<Combo[]>([]);
+	let apps = $state<{ name: string; ms: number }[]>([]);
+
+	// Apps of the running timer, refreshed every 10 s while it runs.
+	$effect(() => {
+		if (!app.running?.id) return;
+		const load = () => api.timerApps({}).then((list) => (apps = list));
+		void load();
+		const timer = setInterval(load, 10_000);
+		return () => clearInterval(timer);
+	});
 
 	const dayStart = $derived(startOfLocalDay(app.now, tz));
 	const dayEnd = $derived(addLocalDays(dayStart, 1, tz));
@@ -105,6 +116,16 @@
 		</Card>
 	</div>
 	<div class="side">
+		{#if app.running}
+			<Card title={strings.today.appsTitle}>
+				{#snippet meta()}{strings.today.appsMeta}{/snippet}
+				{#if apps.length === 0}
+					<p class="muted-text">{strings.today.appsEmpty}</p>
+				{:else}
+					<AppUsageList {apps} />
+				{/if}
+			</Card>
+		{/if}
 		<Card title={strings.today.eventsTitle}>
 			{#snippet meta()}{strings.today.planned} <strong>{formatDuration(plannedMs)}</strong>{/snippet}
 			<EventList {events} now={app.now} onstarttimer={startFromEvent} />
@@ -129,6 +150,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
+	}
+	.muted-text {
+		margin: 0;
+		font-size: 13px;
+		color: var(--clipa-muted);
 	}
 	.empty {
 		margin: 0;

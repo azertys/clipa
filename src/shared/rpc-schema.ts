@@ -36,8 +36,6 @@ export type Settings = {
 	discardShort: boolean;
 	/** Minutes without input before Clipa asks about idle time; 0 = off. */
 	idleMinutes: number;
-	/** Record the frontmost app while the timer runs. */
-	trackApps: boolean;
 	/** Record window titles too (needs Accessibility permission). Off by default. */
 	recordTitles: boolean;
 	/** Bundle ids whose window titles are never recorded. */
@@ -139,7 +137,12 @@ export type ClipaRPC = {
 			/** Writes report tables as CSV files to Downloads and shows them in Finder (D31). */
 			reportsExportCsv: { params: ReportQuery & { tables: ReportTable[] }; response: { paths: string[] } };
 		};
-		messages: {};
+		messages: {
+			/** Alt+F4 on Windows. Quits as the tray's Quit does. */
+			appQuit: {};
+			/** A right click in a text field: Cut / Copy / Paste at the pointer. */
+			editMenuShow: {};
+		};
 	}>;
 	// Handled in the webview, sent by the main process.
 	webview: RPCSchema<{

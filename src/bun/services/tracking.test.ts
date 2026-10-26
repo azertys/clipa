@@ -160,14 +160,12 @@ describe("sampler (M4 acceptance)", () => {
 		s.timer.stop();
 	});
 
-	test("turning app recording off stops writing; entries list the app count", () => {
+	test("entries list the app count", () => {
 		const s = setup();
 		const entry = s.timer.start({ note: "", tagIds: [] });
 		s.run(5);
 		s.state.app = { key: "com.apple.Safari", name: "Safari" };
 		s.run(5);
-		writeSettings(s.db, { trackApps: false });
-		s.run(10);
 		s.timer.stop();
 		expect(s.activity()).toHaveLength(2);
 		expect(listEntries(s.db, 0, s.ctx.now() + 1).find((e) => e.id === entry.id)?.appCount).toBe(2);

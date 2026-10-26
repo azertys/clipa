@@ -35,3 +35,6 @@ new Electroview({ rpc });
 
 /** Requests to the main process. */
 export const api = rpc.request;
+
+/** Messages to the main process, without an answer. */
+export const send = rpc.send;

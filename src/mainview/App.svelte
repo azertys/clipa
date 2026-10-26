@@ -8,7 +8,7 @@
 	import IdleDialog from "./components/IdleDialog.svelte";
 	import RecoveryDialog from "./components/RecoveryDialog.svelte";
 	import { app, tz } from "./lib/app.svelte";
-	import { api } from "./lib/rpc";
+	import { api, send } from "./lib/rpc";
 	import Calendar from "./screens/Calendar.svelte";
 	import Entries from "./screens/Entries.svelte";
 	import Reports from "./screens/Reports.svelte";
@@ -45,7 +45,15 @@
 		if (start.idle) app.idle = start.idle;
 	});
 
+	const windows = navigator.userAgent.includes("Windows");
+
 	function onkeydown(e: KeyboardEvent) {
+		// The close button keeps Clipa in the tray; Alt+F4 quits, as ⌘Q does on macOS.
+		if (windows && e.altKey && e.key === "F4") {
+			e.preventDefault();
+			send.appQuit({});
+			return;
+		}
 		if (!e.metaKey || e.altKey || e.ctrlKey || e.defaultPrevented) return;
 		if (e.key === "Enter") {
 			e.preventDefault();
@@ -58,9 +66,16 @@
 			app.screen = screens[Number(e.key) - 1];
 		}
 	}
+
+	// The webview's own menu has Inspect Element. Text fields get Cut / Copy / Paste from the main process.
+	function oncontextmenu(e: MouseEvent) {
+		e.preventDefault();
+		const field = (e.target as Element).closest("input, textarea, [contenteditable]");
+		if (field) send.editMenuShow({});
+	}
 </script>
 
-<svelte:window {onkeydown} />
+<svelte:window {onkeydown} {oncontextmenu} />
 
 {#if app.recovery}
 	<RecoveryDialog notice={app.recovery} onclose={() => (app.recovery = null)} />

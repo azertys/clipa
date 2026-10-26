@@ -53,7 +53,6 @@ export function readSettings(db: Database): Settings {
 		hour12: getSetting(db, "hour12", false),
 		discardShort: getSetting(db, "discard_short", false),
 		idleMinutes: getSetting(db, "idle_minutes", DEFAULT_IDLE_MINUTES),
-		trackApps: getSetting(db, "track_apps", true),
 		recordTitles: getSetting(db, "record_titles", false),
 		noTitleApps: strings(getSetting(db, "no_title_apps", [])),
 		excludedApps: strings(getSetting(db, "excluded_apps", [])),
@@ -73,7 +72,6 @@ export function writeSettings(db: Database, patch: Partial<Settings>): Settings 
 	if (patch.idleMinutes !== undefined) {
 		setSetting(db, "idle_minutes", Math.min(60, Math.max(0, Math.round(patch.idleMinutes))));
 	}
-	if (patch.trackApps !== undefined) setSetting(db, "track_apps", patch.trackApps);
 	if (patch.recordTitles !== undefined) setSetting(db, "record_titles", patch.recordTitles);
 	if (patch.noTitleApps !== undefined) setSetting(db, "no_title_apps", strings(patch.noTitleApps));
 	if (patch.excludedApps !== undefined) setSetting(db, "excluded_apps", strings(patch.excludedApps));

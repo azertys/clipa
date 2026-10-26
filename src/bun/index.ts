@@ -199,10 +199,18 @@ tray.refresh();
 openMainWindow();
 Electrobun.events.on("reopen", () => openMainWindow());
 
+// Electrobun gives roles no shortcut. An accelerator is one key: ⌘ on macOS, Ctrl on Windows.
+// ⌘Q quits (with the running-timer question); ⌘W closes the window and Clipa stays in the tray.
 ApplicationMenu.setApplicationMenu([
 	{
 		label: strings.appName,
-		submenu: [{ role: "about" }, { type: "separator" }, { role: "hide" }, { role: "hideOthers" }, { role: "quit" }],
+		submenu: [
+			{ role: "about" },
+			{ type: "separator" },
+			{ role: "hide" },
+			{ role: "hideOthers" },
+			{ role: "quit", accelerator: "q" },
+		],
 	},
 	{
 		label: "Edit",
@@ -216,7 +224,7 @@ ApplicationMenu.setApplicationMenu([
 			{ role: "selectAll" },
 		],
 	},
-	{ label: "Window", submenu: [{ role: "minimize" }, { role: "zoom" }, { role: "close" }] },
+	{ label: "Window", submenu: [{ role: "minimize" }, { role: "zoom" }, { role: "close", accelerator: "w" }] },
 ]);
 
 console.log("[clipa] started");

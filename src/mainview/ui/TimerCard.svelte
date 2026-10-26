@@ -48,6 +48,18 @@
 			defaults.every((id) => tagIds.includes(id)),
 	);
 
+	// The note grows with its text up to 400 px (CSS max-height), then scrolls.
+	let noteField: HTMLTextAreaElement;
+	function fitNote() {
+		const border = noteField.offsetHeight - noteField.clientHeight;
+		noteField.style.height = "auto";
+		noteField.style.height = `${noteField.scrollHeight + border}px`;
+	}
+	$effect(() => {
+		void note;
+		fitNote();
+	});
+
 	let startedText = $state("");
 	$effect(() => {
 		startedText = running ? clock(running.started_at) : "";
@@ -65,6 +77,8 @@
 		if (ms !== running.started_at) onstartedat(ms);
 	}
 </script>
+
+<svelte:window onresize={fitNote} />
 
 <section class="timer" class:running aria-label={strings.timer.label}>
 	<div class="top">
@@ -89,6 +103,7 @@
 		<label for="timer-note">{strings.timer.noteLabel}</label>
 		<textarea
 			id="timer-note"
+			bind:this={noteField}
 			rows="2"
 			placeholder={strings.timer.notePlaceholder}
 			value={note}
@@ -196,6 +211,8 @@
 	}
 	textarea {
 		min-height: 64px;
+		max-height: 400px;
+		resize: none;
 		padding: 10px 12px;
 		font-size: 15px;
 	}

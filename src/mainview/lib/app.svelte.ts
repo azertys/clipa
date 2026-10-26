@@ -23,7 +23,6 @@ class AppState {
 		hour12: false,
 		discardShort: false,
 		idleMinutes: 5,
-		trackApps: true,
 		recordTitles: false,
 		noTitleApps: [],
 		excludedApps: [],

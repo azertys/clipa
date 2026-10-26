@@ -71,10 +71,6 @@ export class Sampler {
 		if (!this.segmenter) return;
 		const settings = this.opts.settings();
 		const at = this.opts.now();
-		if (!settings.trackApps) {
-			this.write(this.segmenter.stop(at));
-			return;
-		}
 		const app = this.safely(() => this.opts.tracker.frontmostApp());
 		if (!app) return;
 		const excluded = settings.excludedApps.includes(app.key);

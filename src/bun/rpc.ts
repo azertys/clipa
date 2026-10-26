@@ -1,5 +1,5 @@
 import type { Database } from "bun:sqlite";
-import { BrowserView, Utils } from "electrobun/main";
+import { BrowserView, ContextMenu, Utils, type ApplicationMenuItemConfig } from "electrobun/main";
 import { recentCombos } from "../../core/entries";
 import { exportFileName, reportCsv } from "../../core/export";
 import { localDate } from "../../core/time";
@@ -24,6 +24,15 @@ import { writeNewFile } from "./services/files";
 import { EXCLUDED_KEY } from "./services/sampler";
 import type { TimerService } from "./services/timer";
 import type { Tracking } from "./services/tracking";
+
+/** Replaces the webview's own context menu, which has Inspect Element. */
+const EDIT_MENU: ApplicationMenuItemConfig[] = [
+	{ role: "cut" },
+	{ role: "copy" },
+	{ role: "paste" },
+	{ type: "separator" },
+	{ role: "selectAll" },
+];
 
 /** System Settings → Privacy & Security → Accessibility. */
 const ACCESSIBILITY_SETTINGS = "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility";
@@ -151,7 +160,10 @@ export function createRpc(app: AppContext) {
 					return { paths };
 				},
 			},
-			messages: {},
+			messages: {
+				appQuit: () => Utils.quit(),
+				editMenuShow: () => ContextMenu.showContextMenu(EDIT_MENU),
+			},
 		},
 	});
 }

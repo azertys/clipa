@@ -119,6 +119,22 @@
 		editing = null;
 		newDraft = null;
 	}
+
+	// The handlers below keep the entry in a plain variable. The menu and the dialog clear their
+	// state before the action runs, and a {@const} would then read null.
+	function rowActions(entry: EntryWithTags) {
+		return [
+			{ label: strings.entries.continue, onselect: () => void app.continueWith(entry) },
+			{ label: strings.entries.edit, onselect: () => (editing = entry.id) },
+			{ label: strings.common.delete, danger: true, onselect: () => (confirming = entry) },
+		];
+	}
+
+	function answerDelete(yes: boolean) {
+		const entry = confirming;
+		confirming = null;
+		if (yes && entry) void remove(entry);
+	}
 </script>
 
 <PageHeader title={strings.entries.title}>
@@ -145,6 +161,7 @@
 			<option value="">{strings.entries.allTags}</option>
 			{#each app.tags as tag (tag.id)}<option value={tag.id}>{tag.name}</option>{/each}
 		</select>
+		<Icon name="chevron-down" size={13} strokeWidth={2.2} />
 	</label>
 	<SearchField bind:value={query} />
 </div>
@@ -189,27 +206,11 @@
 </div>
 
 {#if menu}
-	{@const target = menu.entry}
-	<Menu
-		anchor={menu.anchor}
-		onclose={() => (menu = null)}
-		items={[
-			{ label: strings.entries.continue, onselect: () => void app.continueWith(target) },
-			{ label: strings.entries.edit, onselect: () => (editing = target.id) },
-			{ label: strings.common.delete, danger: true, onselect: () => (confirming = target) },
-		]}
-	/>
+	<Menu anchor={menu.anchor} onclose={() => (menu = null)} items={rowActions(menu.entry)} />
 {/if}
 
 {#if confirming}
-	{@const target = confirming}
-	<ConfirmDialog
-		message={strings.editor.confirmDelete}
-		onanswer={(yes) => {
-			confirming = null;
-			if (yes) void remove(target);
-		}}
-	/>
+	<ConfirmDialog message={strings.editor.confirmDelete} onanswer={answerDelete} />
 {/if}
 
 <style>
@@ -227,12 +228,19 @@
 	}
 	.tag-filter :global(svg) {
 		position: absolute;
-		left: 12px;
 		pointer-events: none;
 	}
+	.tag-filter :global(svg:first-of-type) {
+		left: 12px;
+	}
+	.tag-filter :global(svg:last-of-type) {
+		right: 12px;
+	}
+	/* The native macOS select ignores padding, so the tag icon covered the text. */
 	.tag-filter select {
+		appearance: none;
 		height: 36px;
-		padding: 0 14px 0 32px;
+		padding: 0 32px;
 		border-color: var(--clipa-border-strong);
 		border-radius: var(--clipa-r-md);
 		background: transparent;

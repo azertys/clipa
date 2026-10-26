@@ -90,6 +90,13 @@
 			app.revision++;
 		}
 	}
+
+	// Keep the tag before clearing `deleting`: a {@const} would read null after it.
+	function answerDelete(yes: boolean) {
+		const tag = deleting;
+		deleting = null;
+		if (yes && tag) void remove(tag);
+	}
 </script>
 
 <div class="narrow">
@@ -193,22 +200,13 @@
 	</Card>
 
 	<Card title={strings.settings.appTracking}>
+		<p class="help">{strings.settings.appTrackingHint}</p>
 		{#if status && !status.nativeLoaded}<p class="help">{strings.settings.nativeMissing}</p>{/if}
-		<SettingsRow label={strings.settings.recordApps} description={strings.settings.recordAppsHint}>
-			{#snippet control()}
-				<Toggle
-					label={strings.settings.recordApps}
-					checked={app.settings.trackApps}
-					onchange={(v) => set({ trackApps: v })}
-				/>
-			{/snippet}
-		</SettingsRow>
 		<SettingsRow label={strings.settings.recordTitles} description={strings.settings.recordTitlesHint}>
 			{#snippet control()}
 				<Toggle
 					label={strings.settings.recordTitles}
 					checked={app.settings.recordTitles}
-					disabled={!app.settings.trackApps}
 					onchange={setRecordTitles}
 				/>
 			{/snippet}
@@ -344,14 +342,7 @@
 </div>
 
 {#if deleting}
-	{@const target = deleting}
-	<ConfirmDialog
-		message={strings.settings.confirmDeleteTag(target.name)}
-		onanswer={(yes) => {
-			deleting = null;
-			if (yes) void remove(target);
-		}}
-	/>
+	<ConfirmDialog message={strings.settings.confirmDeleteTag(deleting.name)} onanswer={answerDelete} />
 {/if}
 
 <style>

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import lockupDark from "../../assets/logo/clipa-lockup-white.svg";
+	import lockup from "../../assets/logo/clipa-lockup.svg";
 	import { formatElapsed } from "../../core/time";
 	import type { Screen } from "../shared/rpc-schema";
 	import { app } from "./lib/app.svelte";
@@ -45,7 +47,10 @@
 
 <div class="shell">
 	<nav>
-		<div class="brand">{strings.appName}</div>
+		<picture class="brand">
+			<source srcset={lockupDark} media="(prefers-color-scheme: dark)" />
+			<img src={lockup} alt={strings.appName} />
+		</picture>
 		{#each screens as screen, i (screen)}
 			<button class="nav" class:active={app.screen === screen} onclick={() => (app.screen = screen)}>
 				<span>{strings.nav[screen]}</span>
@@ -98,9 +103,11 @@
 		border-right: 1px solid var(--border);
 	}
 	.brand {
-		font-weight: 700;
-		font-size: 15px;
-		padding: 4px 10px 14px;
+		padding: 6px 10px 16px;
+	}
+	.brand img {
+		display: block;
+		height: 24px;
 	}
 	.nav {
 		display: flex;

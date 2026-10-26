@@ -24,12 +24,15 @@ export default {
 			"dist/index.html": "views/mainview/index.html",
 			"dist/assets": "views/mainview/assets",
 			"native/macos/.build/release/libclipanative.dylib": "native/libclipanative.dylib",
-			"assets/tray": "views/tray",
+			// Template images: macOS tints them for the menu bar (assets/README.md).
+			"assets/tray/macos": "views/tray",
 		},
 		// Ignore Vite output in watch mode — HMR handles view rebuilds separately
 		watchIgnore: ["dist/**", "native/macos/.build/**"],
 		mac: {
 			bundleCEF: false,
+			// Made from assets/logo/clipa-mark.svg by scripts/make-app-icon.swift.
+			icons: "assets/icon.iconset",
 		},
 		linux: {
 			bundleCEF: false,

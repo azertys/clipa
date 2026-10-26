@@ -8,6 +8,11 @@ import { listTags } from "./db/tags";
 import type { TimerService } from "./services/timer";
 
 const TITLE_REFRESH_MS = 30_000;
+
+// 32 px images shown at 16 pt, so they stay sharp on Retina menu bars. Both are template images
+// with the same shape; the elapsed time next to the icon shows that the timer runs (assets/README.md).
+const ICON_IDLE = "views://tray/ClipaTrayIdleTemplate@2x.png";
+const ICON_RUNNING = "views://tray/ClipaTrayRunningTemplate@2x.png";
 const CONTINUE_COUNT = 5;
 
 export type TrayActions = {
@@ -27,7 +32,7 @@ export class ClipaTray {
 		private readonly actions: TrayActions,
 		private readonly now: () => number = Date.now,
 	) {
-		this.tray = new Tray({ title: "", image: "views://tray/idle.png", template: true, width: 18, height: 18 });
+		this.tray = new Tray({ title: "", image: ICON_IDLE, template: true, width: 16, height: 16 });
 		this.refresh();
 		this.tray.on("tray-clicked", (event: unknown) => {
 			const { action, data } = (event as { data: { action: string; data?: unknown } }).data;
@@ -41,7 +46,7 @@ export class ClipaTray {
 	/** Updates the icon, title and menu from the database. */
 	refresh(): void {
 		const running = this.timer.status();
-		this.tray.setImage(running ? "views://tray/running.png" : "views://tray/idle.png");
+		this.tray.setImage(running ? ICON_RUNNING : ICON_IDLE);
 		this.updateTitle();
 		if (running && !this.titleTimer) {
 			this.titleTimer = setInterval(() => this.updateTitle(), TITLE_REFRESH_MS);

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="206" height="100" viewBox="-4 -9 206 100">
+  <title>clipa</title>
+  <g fill="none" stroke="#16181D" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M39.14 25.86A20 20 0 1 0 39.14 54.14"/>
+    <path d="M55 0V60"/>
+    <path d="M75 20V60"/>
+    <path d="M95 20V82"/>
+    <circle cx="115" cy="40" r="20"/>
+    <circle cx="172" cy="40" r="20"/>
+    <path d="M192 20V60"/>
+  </g>
+  <circle cx="75" cy="0" r="7.5" fill="#FF5B2E"/>
+</svg>

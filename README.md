@@ -19,6 +19,7 @@ hutch run dev:hmr   # same, with Vite hot reload for the view
 hutch run test      # unit and integration tests (bun test)
 hutch run check     # svelte-check + TypeScript
 hutch run native    # build libclipanative.dylib only
+hutch run icon      # redraw assets/icon.iconset from the logo mark
 ```
 
 The dev build keeps its database at
@@ -32,6 +33,7 @@ src/bun/         main process: database, timer, tray, native calls, RPC handlers
 src/mainview/    Svelte 5 view; all UI strings are in strings.ts
 src/shared/      the typed RPC contract
 native/macos/    Swift package that builds libclipanative.dylib
+assets/          logo, tray icons and the app icon set (see assets/README.md)
 docs/            decisions.md, open-questions.md
 ```
 

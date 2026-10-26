@@ -3,6 +3,7 @@ import {
 	HOUR,
 	MINUTE,
 	addLocalDays,
+	atLocalMinutes,
 	dateRange,
 	formatClock,
 	formatDuration,
@@ -12,6 +13,9 @@ import {
 	isoLocal,
 	localDate,
 	localDateStart,
+	localMinutes,
+	parseClock,
+	parseDuration,
 	presetRange,
 	startOfLocalDay,
 	startOfLocalMonth,
@@ -124,5 +128,53 @@ describe("report ranges", () => {
 			from: utc("2026-10-23T21:00:00Z"),
 			to: utc("2026-10-25T22:00:00Z"),
 		});
+	});
+});
+
+describe("12-hour clock, week start and parsing", () => {
+	test("formatClock with hour12", () => {
+		expect(formatClock(utc("2026-10-26T06:30:00Z"), TZ, true)).toBe("8:30 AM");
+		expect(formatClock(utc("2026-10-26T10:05:00Z"), TZ, true)).toBe("12:05 PM");
+		expect(formatClock(utc("2026-10-25T22:15:00Z"), TZ, true)).toBe("12:15 AM");
+		expect(formatClock(utc("2026-10-26T19:00:00Z"), TZ, true)).toBe("9:00 PM");
+	});
+
+	test("weeks can start on Sunday", () => {
+		// Monday 2026-10-26 → Sunday 2026-10-25. Sunday itself stays.
+		expect(startOfLocalWeek(utc("2026-10-26T08:00:00Z"), TZ, 7)).toBe(utc("2026-10-24T21:00:00Z"));
+		expect(startOfLocalWeek(utc("2026-10-25T12:00:00Z"), TZ, 7)).toBe(utc("2026-10-24T21:00:00Z"));
+		expect(presetRange("thisWeek", utc("2026-10-26T08:00:00Z"), TZ, 7).from).toBe(utc("2026-10-24T21:00:00Z"));
+	});
+
+	test("parseClock", () => {
+		expect(parseClock("13:05")).toBe(13 * 60 + 5);
+		expect(parseClock(" 9.30 ")).toBe(9 * 60 + 30);
+		expect(parseClock("0830")).toBe(8 * 60 + 30);
+		expect(parseClock("24:00")).toBeNull();
+		expect(parseClock("12:60")).toBeNull();
+		expect(parseClock("noon")).toBeNull();
+		expect(parseClock("9")).toBeNull();
+	});
+
+	test("parseClock with AM and PM", () => {
+		expect(parseClock("8:30 PM")).toBe(20 * 60 + 30);
+		expect(parseClock("8pm")).toBe(20 * 60);
+		expect(parseClock("12:15 am")).toBe(15);
+		expect(parseClock("12:00 PM")).toBe(12 * 60);
+		expect(parseClock("13:00 PM")).toBeNull();
+	});
+
+	test("parseDuration", () => {
+		expect(parseDuration("1:45")).toBe(105 * MINUTE);
+		expect(parseDuration("105")).toBe(105 * MINUTE);
+		expect(parseDuration("0:75")).toBeNull();
+		expect(parseDuration("1h")).toBeNull();
+	});
+
+	test("atLocalMinutes and localMinutes", () => {
+		expect(atLocalMinutes("2026-10-26", 9 * 60 + 15, TZ)).toBe(utc("2026-10-26T07:15:00Z"));
+		// 03:30 on the spring-forward day moves to 04:30.
+		expect(atLocalMinutes("2026-03-29", 3 * 60 + 30, TZ)).toBe(utc("2026-03-29T01:30:00Z"));
+		expect(localMinutes(utc("2026-10-26T07:15:00Z"), TZ)).toBe(9 * 60 + 15);
 	});
 });

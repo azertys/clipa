@@ -124,6 +124,7 @@ describe("buildReport (spec section 12)", () => {
 		const r = report({ events: [ev("08:00", "12:00")], entries: [tagged("09:00", "11:00"), tagged("10:00", "12:00")] });
 		expect(r.events[0]).toMatchObject({ trackedMs: 3 * HOUR, coverage: 0.75 });
 		expect(r.totals.trackedMs).toBe(3 * HOUR);
+		expect(r.entryCount).toBe(2);
 	});
 
 	test("overlapping events: 3:00 each, total 4:00, outside 0:00", () => {
@@ -150,6 +151,7 @@ describe("buildReport (spec section 12)", () => {
 
 	test("clipped event: tracked 1:00 of 2:00, partial", () => {
 		const r = report({ from: at("10:00"), events: [ev("08:00", "12:00")], entries: [tagged("09:00", "11:00")] });
+		expect(report({ from: at("11:00"), entries: [tagged("09:00", "11:00")] }).entryCount).toBe(0);
 		expect(r.events[0]).toMatchObject({ trackedMs: HOUR, plannedMs: 2 * HOUR, coverage: 0.5, partial: true });
 	});
 

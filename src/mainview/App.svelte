@@ -1,20 +1,40 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import lockupDark from "../../assets/logo/clipa-lockup-white.svg";
-	import lockup from "../../assets/logo/clipa-lockup.svg";
-	import { formatElapsed } from "../../core/time";
+	import { length } from "../../core/overlap";
+	import { trackedIntervals } from "../../core/reports";
+	import { addLocalDays, startOfLocalDay, startOfLocalWeek } from "../../core/time";
+	import type { EntryWithTags } from "../../core/types";
 	import type { Screen } from "../shared/rpc-schema";
-	import { app } from "./lib/app.svelte";
-	import { api } from "./lib/rpc";
 	import RecoveryDialog from "./components/RecoveryDialog.svelte";
+	import { app, tz } from "./lib/app.svelte";
+	import { api } from "./lib/rpc";
 	import Calendar from "./screens/Calendar.svelte";
 	import Entries from "./screens/Entries.svelte";
 	import Reports from "./screens/Reports.svelte";
 	import Settings from "./screens/Settings.svelte";
 	import Today from "./screens/Today.svelte";
 	import { strings } from "./strings";
+	import AppShell from "./ui/AppShell.svelte";
+	import IconButton from "./ui/IconButton.svelte";
+	import RunningTimerMini from "./ui/RunningTimerMini.svelte";
+	import Sidebar from "./ui/Sidebar.svelte";
+	import SidebarSummary from "./ui/SidebarSummary.svelte";
 
 	const screens: Screen[] = ["today", "entries", "calendar", "reports", "settings"];
+
+	// Sidebar totals for today and this week.
+	let weekEntries = $state<EntryWithTags[]>([]);
+	const dayStart = $derived(startOfLocalDay(app.now, tz));
+	const weekStart = $derived(startOfLocalWeek(app.now, tz, app.settings.weekStart));
+	const weekEnd = $derived(addLocalDays(weekStart, 7, tz));
+	const todayMs = $derived(length(trackedIntervals(weekEntries, dayStart, addLocalDays(dayStart, 1, tz), app.now)));
+	const weekMs = $derived(length(trackedIntervals(weekEntries, weekStart, weekEnd, app.now)));
+
+	$effect(() => {
+		const [from, to] = [weekStart, weekEnd];
+		void [app.revision, app.running?.id];
+		void api.entriesList({ from, to }).then((list) => (weekEntries = list));
+	});
 
 	onMount(async () => {
 		await app.load();
@@ -24,14 +44,13 @@
 	});
 
 	function onkeydown(e: KeyboardEvent) {
-		if (!e.metaKey || e.altKey || e.ctrlKey) return;
+		if (!e.metaKey || e.altKey || e.ctrlKey || e.defaultPrevented) return;
 		if (e.key === "Enter") {
 			e.preventDefault();
 			void app.toggleTimer();
 		} else if (e.key === "n") {
 			e.preventDefault();
-			app.screen = "entries";
-			app.panelEntryId = "new";
+			app.navigate({ screen: "entries", entryId: "new" });
 		} else if (e.key >= "1" && e.key <= "5") {
 			e.preventDefault();
 			app.screen = screens[Number(e.key) - 1];
@@ -45,139 +64,53 @@
 	<RecoveryDialog notice={app.recovery} onclose={() => (app.recovery = null)} />
 {/if}
 
-<div class="shell">
-	<nav>
-		<picture class="brand">
-			<source srcset={lockupDark} media="(prefers-color-scheme: dark)" />
-			<img src={lockup} alt={strings.appName} />
-		</picture>
-		{#each screens as screen, i (screen)}
-			<button class="nav" class:active={app.screen === screen} onclick={() => (app.screen = screen)}>
-				<span>{strings.nav[screen]}</span>
-				<kbd>⌘{i + 1}</kbd>
-			</button>
-		{/each}
-		<div class="spacer"></div>
-		{#if app.running}
-			<button class="mini" onclick={() => (app.screen = "today")}>
-				<span class="dot"></span>
-				{formatElapsed(app.now - app.running.started_at)}
-			</button>
-		{/if}
-	</nav>
+<AppShell flush={app.screen === "calendar"}>
+	{#snippet sidebar()}
+		<Sidebar active={app.screen} onnavigate={(id) => (app.screen = id)}>
+			{#snippet footer()}
+				{#if app.running}
+					<RunningTimerMini
+						elapsedMs={app.now - app.running.started_at}
+						note={app.note}
+						onclick={() => (app.screen = "today")}
+					/>
+				{:else}
+					<SidebarSummary {todayMs} {weekMs} />
+				{/if}
+			{/snippet}
+		</Sidebar>
+	{/snippet}
 
-	<main class:flush={app.screen === "entries" || app.screen === "calendar"}>
-		{#if app.error}
-			<div class="error" role="alert">
-				{app.error}
-				<button class="ghost" onclick={() => (app.error = null)} aria-label={strings.panel.cancel}>×</button>
-			</div>
-		{/if}
-		{#if app.screen === "today"}
-			<Today />
-		{:else if app.screen === "entries"}
-			<Entries />
-		{:else if app.screen === "calendar"}
-			<Calendar />
-		{:else if app.screen === "reports"}
-			<Reports />
-		{:else}
-			<Settings />
-		{/if}
-	</main>
-</div>
+	{#if app.error}
+		<div class="error" role="alert">
+			<span>{app.error}</span>
+			<IconButton icon="close" label={strings.common.close} size={26} iconSize={12} onclick={() => (app.error = null)} />
+		</div>
+	{/if}
+	{#if app.screen === "today"}
+		<Today />
+	{:else if app.screen === "entries"}
+		<Entries />
+	{:else if app.screen === "calendar"}
+		<Calendar />
+	{:else if app.screen === "reports"}
+		<Reports />
+	{:else}
+		<Settings />
+	{/if}
+</AppShell>
 
 <style>
-	.shell {
-		display: flex;
-		height: 100vh;
-	}
-	nav {
-		width: 190px;
-		flex-shrink: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		padding: 16px 10px;
-		background: var(--sidebar);
-		border-right: 1px solid var(--border);
-	}
-	.brand {
-		padding: 6px 10px 16px;
-	}
-	.brand img {
-		display: block;
-		height: 24px;
-	}
-	.nav {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 7px 10px;
-		border: none;
-		border-radius: 6px;
-		background: none;
-		color: inherit;
-		font: inherit;
-		text-align: left;
-		cursor: pointer;
-	}
-	.nav:hover {
-		background: var(--hover);
-	}
-	.nav.active {
-		background: var(--selected);
-		font-weight: 600;
-	}
-	kbd {
-		font: inherit;
-		font-size: 11px;
-		color: var(--muted);
-	}
-	.spacer {
-		flex: 1;
-	}
-	.mini {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		padding: 8px 10px;
-		font-variant-numeric: tabular-nums;
-	}
-	.dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		background: var(--accent);
-	}
-	main {
-		flex: 1;
-		min-width: 0;
-		overflow-y: auto;
-		padding: 20px 24px;
-		position: relative;
-	}
-	main.flush {
-		padding: 0;
-		overflow: hidden;
-	}
 	.error {
-		position: sticky;
-		top: 0;
-		z-index: 30;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 12px;
-		padding: 8px 12px;
-		border-radius: 6px;
-		background: var(--error-bg);
-		color: var(--error);
-	}
-	main.flush .error {
-		position: absolute;
-		left: 24px;
-		right: 24px;
-		top: 12px;
+		gap: 12px;
+		padding: 6px 6px 6px 14px;
+		border: 1px solid var(--clipa-danger);
+		border-radius: var(--clipa-r-lg);
+		background: var(--clipa-danger-tint);
+		color: var(--clipa-danger-text);
+		font-size: 13px;
 	}
 </style>

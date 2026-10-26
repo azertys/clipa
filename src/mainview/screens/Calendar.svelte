@@ -2,7 +2,7 @@
 	import { Calendar, DayGrid, Interaction, TimeGrid } from "@event-calendar/core";
 	import "@event-calendar/core/index.css";
 	import { onDestroy } from "svelte";
-	import { localDate } from "../../../core/time";
+	import { localDate, type WeekStart } from "../../../core/time";
 	import type { EditMode, EventFields, Instance } from "../../../core/types";
 	import EventDialog from "../components/EventDialog.svelte";
 	import ModeDialog from "../components/ModeDialog.svelte";
@@ -10,6 +10,8 @@
 	import { modeRequest, type DialogTarget, type ModeRequest } from "../lib/calendar";
 	import { api } from "../lib/rpc";
 	import { strings } from "../strings";
+	import PageHeader from "../ui/PageHeader.svelte";
+	import Toggle from "../ui/Toggle.svelte";
 
 	const HOUR = 3_600_000;
 	const MINUTE = 60_000;
@@ -45,7 +47,8 @@
 					start: new Date(e.started_at),
 					end: new Date(e.ended_at ?? now),
 					display: "background",
-					classNames: "tracked",
+					// A narrow bar at the right edge of the day (clipa-ui-svelte README, "Calendar").
+					classNames: e.ended_at === null ? ["tracked", "running"] : "tracked",
 				}),
 			),
 			...instances.map(
@@ -56,7 +59,8 @@
 					end: i.allDay ? localDate(i.end, tz) : new Date(i.end),
 					allDay: i.allDay,
 					title: i.title || strings.calendar.untitled,
-					color: i.color ?? undefined,
+					classNames: "clipa-event",
+					styles: i.color ? [`--event: ${i.color}`] : [],
 					extendedProps: { instance: i },
 				}),
 			),
@@ -102,11 +106,26 @@
 		refetch();
 	}
 
+	/** EventCalendar counts days from Sunday = 0. */
+	const firstDay = (weekStart: WeekStart): Calendar.dayOfWeek => (weekStart === 7 ? 0 : 1);
+
+	function timeFormats(hour12: boolean): Pick<Calendar.Options, "slotLabelFormat" | "eventTimeFormat"> {
+		const format: Intl.DateTimeFormatOptions = hour12
+			? { hour: "numeric", minute: "2-digit", hour12: true }
+			: { hour: "2-digit", minute: "2-digit", hour12: false };
+		return { slotLabelFormat: format, eventTimeFormat: format };
+	}
+
 	let options = $state<Calendar.Options>({
 		view: "timeGridWeek",
-		headerToolbar: { start: "prev,next today", center: "title", end: "tracked dayGridMonth,timeGridWeek,timeGridDay" },
+		headerToolbar: { start: "prev,next today", center: "title", end: "dayGridMonth,timeGridWeek,timeGridDay" },
 		buttonText: (text) => ({ ...text, ...strings.calendar.buttons }),
-		firstDay: 1,
+		firstDay: firstDay(app.settings.weekStart),
+		// Day before month ("Mon 26", "26 Oct – 1 Nov 2026"), as in the rest of the app.
+		locale: "en-GB",
+		dayHeaderFormat: { weekday: "short", day: "numeric" },
+		...timeFormats(app.settings.hour12),
+		slotHeight: 28,
 		height: "100%",
 		nowIndicator: true,
 		scrollTime: "07:00:00",
@@ -127,6 +146,11 @@
 		eventResize: (info) => void moved(info),
 	});
 
+	// Follow the time format and week start settings.
+	$effect(() => {
+		Object.assign(options, timeFormats(app.settings.hour12), { firstDay: firstDay(app.settings.weekStart) });
+	});
+
 	// Reload when events or entries change, and every minute while the timer runs.
 	let seen = app.revision;
 	$effect(() => {
@@ -141,19 +165,19 @@
 	onDestroy(() => clearInterval(tick));
 </script>
 
-<div class="calendar ec-auto-dark">
-	<Calendar bind:this={instance} plugins={[TimeGrid, DayGrid, Interaction]} {options}>
-		{#snippet customButtonTracked()}
-			<label class="tracked-toggle">
-				<input
-					type="checkbox"
-					checked={app.settings.showTrackedTime}
-					onchange={(e) => toggleTracked(e.currentTarget.checked)}
-				/>
-				{strings.calendar.showTracked}
-			</label>
-		{/snippet}
-	</Calendar>
+<PageHeader title={strings.calendar.title}>
+	{#snippet aside()}
+		<span class="toggle-label">{strings.calendar.showTracked}</span>
+		<Toggle
+			label={strings.calendar.showTracked}
+			checked={app.settings.showTrackedTime}
+			onchange={(show) => toggleTracked(show)}
+		/>
+	{/snippet}
+</PageHeader>
+
+<div class="calendar">
+	<Calendar bind:this={instance} plugins={[TimeGrid, DayGrid, Interaction]} {options} />
 </div>
 
 {#if target}
@@ -164,30 +188,83 @@
 {/if}
 
 <style>
-	.calendar {
-		height: 100%;
-		padding: 16px 20px;
+	.toggle-label {
+		color: var(--clipa-text-2);
 	}
+	.calendar {
+		flex: 1;
+		min-height: 0;
+		padding: 16px;
+		border: 1px solid var(--clipa-border);
+		border-radius: var(--clipa-r-card);
+		background: var(--clipa-surface);
+	}
+
+	/* EventCalendar theme mapped to the design tokens (clipa-ui-svelte README, "Calendar"). */
 	.calendar :global(.ec) {
-		--ec-bg-color: var(--surface);
-		--ec-border-color: var(--border);
-		--ec-button-bg-color: var(--surface);
-		--ec-button-active-bg-color: var(--selected);
-		--ec-event-bg-color: var(--accent);
-		--ec-event-text-color: var(--accent-text);
-		--ec-now-indicator-color: var(--danger);
+		color-scheme: dark;
 		height: 100%;
+		--ec-bg-color: var(--clipa-surface);
+		--ec-text-color: var(--clipa-text);
+		--ec-border-color: var(--clipa-divider);
+		--ec-color-400: var(--clipa-faint);
+		--ec-color-300: var(--clipa-border-strong);
+		--ec-color-200: var(--clipa-surface-2);
+		--ec-color-100: var(--clipa-surface);
+		--ec-color-50: var(--clipa-bg);
+		--ec-button-bg-color: var(--clipa-surface);
+		--ec-button-border-color: var(--clipa-border-strong);
+		--ec-button-text-color: var(--clipa-text-2);
+		--ec-button-active-bg-color: var(--clipa-surface-3);
+		--ec-button-active-border-color: var(--clipa-border-strong);
+		--ec-button-active-text-color: var(--clipa-text);
+		--ec-today-bg-color: var(--clipa-accent-tint);
+		--ec-highlight-color: var(--clipa-accent-tint);
+		--ec-now-indicator-color: var(--clipa-danger);
+		--ec-popup-bg-color: var(--clipa-menu);
+		--ec-bg-event-opacity: 1;
+		font-size: 13px;
+	}
+	.calendar :global(.ec-time-grid) {
+		/* Keep events 14 px from the right edge so the tracked bar stays visible. */
+		--ec-event-col-gap: 14px;
+	}
+	.calendar :global(.ec-toolbar) {
+		margin-bottom: 12px;
+	}
+	.calendar :global(.ec-title) {
+		font-size: 16px;
+		font-weight: 650;
+	}
+	.calendar :global(.ec-button) {
+		height: 32px;
+		border-radius: var(--clipa-r);
+		font-size: 13px;
+	}
+	.calendar :global(.ec-day.ec-sat),
+	.calendar :global(.ec-day.ec-sun) {
+		--ec-day-bg-color: var(--clipa-weekend);
+	}
+	.calendar :global(.ec-event.clipa-event) {
+		--event-color: var(--event, var(--clipa-event));
+		background-color: color-mix(in srgb, var(--event-color) 18%, transparent);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--event-color) 50%, transparent);
+		color: color-mix(in srgb, var(--event-color) 35%, var(--clipa-chip-text-base));
 	}
 	.calendar :global(.ec-bg-event.tracked) {
-		background-color: var(--tracked);
-		opacity: 0.35;
+		justify-self: end;
+		inline-size: 6px;
+		margin-inline-end: 3px;
+		border-radius: 3px;
+		background: var(--clipa-tracked);
 	}
-	.tracked-toggle {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		margin-right: 12px;
-		font-size: 12px;
-		white-space: nowrap;
+	.calendar :global(.ec-bg-event.running) {
+		background: repeating-linear-gradient(
+			135deg,
+			var(--clipa-tracked) 0,
+			var(--clipa-tracked) 6px,
+			var(--clipa-tracked-dark) 6px,
+			var(--clipa-tracked-dark) 12px
+		);
 	}
 </style>

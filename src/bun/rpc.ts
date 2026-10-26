@@ -1,10 +1,11 @@
 import type { Database } from "bun:sqlite";
 import { BrowserView, Utils } from "electrobun/main";
+import { recentCombos } from "../../core/entries";
 import { exportFileName, reportCsv } from "../../core/export";
 import { localDate } from "../../core/time";
 import { strings } from "../mainview/strings";
 import type { AppInfo, ClipaRPC, UiStart } from "../shared/rpc-schema";
-import { getEntry, listEntries, saveEntry } from "./db/entries";
+import { getEntry, listEntries, recentEntries, saveEntry } from "./db/entries";
 import {
 	deleteEventOccurrence,
 	editEventOccurrence,
@@ -50,6 +51,11 @@ export function createRpc(app: AppContext) {
 				timerStart: (input) => timer.start(input),
 				timerStop: () => timer.stop(),
 				timerStatus: () => timer.status(),
+				timerDiscard: () => {
+					timer.discard();
+					return true as const;
+				},
+				timerRecent: ({ limit }) => recentCombos(recentEntries(db, 200), limit),
 				timerDraft: (draft) => {
 					app.setDraft(draft);
 					return true as const;
@@ -74,7 +80,12 @@ export function createRpc(app: AppContext) {
 				},
 
 				settingsGet: () => readSettings(db),
-				settingsSet: (patch) => writeSettings(db, patch),
+				// The tray reads the settings (menu bar timer).
+				settingsSet: (patch) => changed(writeSettings(db, patch)),
+				revealDatabase: () => {
+					Utils.showItemInFolder(app.info.dbPath);
+					return true as const;
+				},
 
 				eventsInstances: ({ from, to }) => listInstances(db, from, to),
 				eventsGet: ({ id }) => {
@@ -93,17 +104,17 @@ export function createRpc(app: AppContext) {
 				},
 
 				reportsGet: (query) => loadReport(db, query, ctx.now()),
-				reportsExportCsv: ({ table, ...query }) => {
+				reportsExportCsv: ({ tables, ...query }) => {
 					const report = loadReport(db, query, ctx.now());
 					const tagNames = new Map(listTags(db).map((t) => [t.id, t.name]));
-					const content = reportCsv(report, table, {
-						tagName: (id) => tagNames.get(id) ?? id,
-						untagged: strings.tags.untagged,
-					});
-					const name = exportFileName(table, localDate(query.from, query.tzid), localDate(query.to - 1, query.tzid));
-					const path = writeNewFile(Utils.paths.downloads, name, content);
-					Utils.showItemInFolder(path);
-					return { path };
+					const names = { tagName: (id: string) => tagNames.get(id) ?? id, untagged: strings.tags.untagged };
+					const from = localDate(query.from, query.tzid);
+					const to = localDate(query.to - 1, query.tzid);
+					const paths = tables.map((table) =>
+						writeNewFile(Utils.paths.downloads, exportFileName(table, from, to), reportCsv(report, table, names)),
+					);
+					if (paths.length > 0) Utils.showItemInFolder(paths[paths.length - 1]);
+					return { paths };
 				},
 			},
 			messages: {},

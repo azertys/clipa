@@ -18,8 +18,8 @@ export type ModeRequest = {
 
 export type AskMode = (request: ModeRequest) => Promise<EditMode | null>;
 
-/** Event colors for the dialog. null is the calendar's default color. */
-export const EVENT_COLORS = ["#2563eb", "#16a34a", "#d97706", "#dc2626", "#9333ea", "#0891b2", "#db2777", "#57534e"];
+/** Event colors for the dialog, from the design's tag colors. null is the default amber. */
+export const EVENT_COLORS = ["#6b9bf5", "#4fbf87", "#b48cf2", "#45b8c4", "#e57ea8", "#f07167", "#a3a3a3"];
 
 /**
  * The mode question for a change to one instance. "This event" cannot change the repeat,

@@ -7,6 +7,8 @@ import { getSetting, setSetting } from "../db/settings";
 export const HEARTBEAT_MS = 30_000;
 /** Entries shorter than this are deleted on stop. */
 export const MIN_ENTRY_MS = 1_000;
+/** With "Discard short entries" on, entries shorter than this are deleted on stop. */
+export const SHORT_ENTRY_MS = 60_000;
 
 /** settings key: id of the entry the user chose to keep running when quitting. */
 const KEPT_ON_QUIT = "kept_running_entry_id";
@@ -20,6 +22,8 @@ export type TimerOptions = {
 	db: Database;
 	ctx: WriteContext;
 	heartbeatMs?: number;
+	/** The shortest entry to keep, read at each stop (the "Discard short entries" setting). */
+	minEntryMs?: () => number;
 	onChange?: (running: EntryWithTags | null) => void;
 };
 
@@ -65,14 +69,9 @@ export class TimerService {
 			const running = runningEntry(this.db);
 			if (!running) return null;
 			const now = this.ctx.now();
-			if (now - running.started_at < MIN_ENTRY_MS) {
-				// Too short to keep. ended_at is set so no deleted row stays "running".
-				writeRow(this.db, this.ctx, "time_entries", {
-					...running,
-					ended_at: running.started_at + MIN_ENTRY_MS,
-					deleted_at: now,
-				});
-				this.writeTimerState(null, null);
+			const min = Math.max(MIN_ENTRY_MS, this.opts.minEntryMs?.() ?? 0);
+			if (now - running.started_at < min) {
+				this.removeRunning(running, now);
 				return null;
 			}
 			writeRow(this.db, this.ctx, "time_entries", { ...running, ended_at: now });
@@ -99,19 +98,19 @@ export class TimerService {
 		return this.start(input);
 	}
 
+	/** Deletes the running entry and stops the timer (the Today screen's "Discard"). */
+	discard(): void {
+		const running = this.status();
+		if (!running) return;
+		this.db.transaction(() => this.removeRunning(running, this.ctx.now()))();
+		this.stopHeartbeat();
+		this.opts.onChange?.(null);
+	}
+
 	/** Deletes an entry. Deleting the running entry also stops the timer. */
 	deleteEntry(id: string): void {
-		const running = this.status();
-		if (running?.id === id) {
-			this.db.transaction(() => {
-				deleteEntry(this.db, this.ctx, id);
-				this.writeTimerState(null, null);
-			})();
-			this.stopHeartbeat();
-			this.opts.onChange?.(null);
-			return;
-		}
-		deleteEntry(this.db, this.ctx, id);
+		if (this.status()?.id === id) this.discard();
+		else deleteEntry(this.db, this.ctx, id);
 	}
 
 	/** Called when the user quits with "Quit and keep running". */
@@ -160,6 +159,16 @@ export class TimerService {
 
 	beat(): void {
 		this.db.query("UPDATE timer_state SET heartbeat_at = ? WHERE id = 1 AND entry_id IS NOT NULL").run(this.ctx.now());
+	}
+
+	/** Soft-deletes the running entry. ended_at is set so no deleted row stays "running". */
+	private removeRunning(running: EntryWithTags, now: number) {
+		writeRow(this.db, this.ctx, "time_entries", {
+			...running,
+			ended_at: Math.max(now, running.started_at + MIN_ENTRY_MS),
+			deleted_at: now,
+		});
+		this.writeTimerState(null, null);
 	}
 
 	private writeTimerState(entryId: string | null, heartbeatAt: number | null) {

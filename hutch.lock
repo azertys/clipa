@@ -8,7 +8,6 @@
         "@event-calendar/core": "5.17.2",
         "@js-temporal/polyfill": "0.5.1",
         "rrule": "2.8.1",
-        "uplot": "1.6.32",
       },
       "devDependencies": {
         "@sveltejs/vite-plugin-svelte": "^6.2.4",
@@ -263,8 +262,6 @@
     "typescript": ["typescript@5.9.3", "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz", {"bin": {"tsc": "bin/tsc", "tsserver": "bin/tsserver"}}, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "undici-types": ["undici-types@8.12.3", "https://registry.npmjs.org/undici-types/-/undici-types-8.12.3.tgz", {}, "sha512-EXE4ydL3S76dFb27UFjNVZHTyv/TLdATj/KUe29ptdcg6qXL48J2tZ3126E5kICj5jn781OR+XlVH1N6Mz8jbA=="],
-
-    "uplot": ["uplot@1.6.32", "https://registry.npmjs.org/uplot/-/uplot-1.6.32.tgz", {}, "sha512-KIMVnG68zvu5XXUbC4LQEPnhwOxBuLyW1AHtpm6IKTXImkbLgkMy+jabjLgSLMasNuGGzQm/ep3tOkyTxpiQIw=="],
 
     "vite": ["vite@7.3.7", "https://registry.npmjs.org/vite/-/vite-7.3.7.tgz", {"dependencies": {"fdir": "^6.5.0", "rollup": "^4.43.0", "esbuild": "^0.27.0 || ^0.28.0", "postcss": "^8.5.6", "picomatch": "^4.0.3", "tinyglobby": "^0.2.15"}, "optionalDependencies": {"fsevents": "~2.3.3"}, "peerDependencies": {"tsx": "^4.8.1", "jiti": ">=1.21.0", "less": "^4.0.0", "sass": "^1.70.0", "yaml": "^2.4.2", "stylus": ">=0.54.8", "terser": "^5.16.0", "sugarss": "^5.0.0", "@types/node": "^20.19.0 || >=22.12.0", "lightningcss": "^1.21.0", "sass-embedded": "^1.70.0"}, "bin": {"vite": "bin/vite.js"}, "optionalPeers": ["@types/node", "jiti", "less", "lightningcss", "sass", "sass-embedded", "stylus", "sugarss", "terser", "tsx", "yaml"]}, "sha512-AHEzTORMbi7/7aXp7w7KZ5+DCUdSeLsJz0grY8xHpc9DHdYb0vQu6DqJfm2tOw3gDExNgPgnJTXxM6syYFHaCA=="],
 

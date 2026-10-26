@@ -1,16 +1,15 @@
 <script lang="ts">
-	import { formatClock } from "../../../core/time";
 	import type { RecoveryNotice } from "../../shared/rpc-schema";
-	import { app, tz } from "../lib/app.svelte";
-	import { api } from "../lib/rpc";
+	import { app, clock } from "../lib/app.svelte";
 	import { strings } from "../strings";
+	import Button from "../ui/Button.svelte";
 
 	let { notice, onclose }: { notice: RecoveryNotice; onclose: () => void } = $props();
 
 	let dialog: HTMLDialogElement;
 
 	$effect(() => {
-		dialog.showModal();
+		if (!dialog.open) dialog.showModal();
 	});
 
 	function edit() {
@@ -18,22 +17,18 @@
 		app.navigate({ screen: "entries", entryId: notice.entry.id });
 	}
 
-	async function resume() {
+	function resume() {
 		onclose();
-		const entry = await app.attempt(() =>
-			api.timerStart({ note: notice.entry.note, tagIds: notice.entry.tagIds }),
-		);
-		if (entry) app.setRunning(entry);
-		app.revision++;
+		void app.continueWith(notice.entry);
 	}
 </script>
 
 <dialog bind:this={dialog} oncancel={onclose} aria-labelledby="recovery-title">
 	<h2 id="recovery-title">{strings.dialogs.recoveryTitle}</h2>
-	<p>{strings.dialogs.recoveryMessage(formatClock(notice.endedAt, tz))}</p>
+	<p>{strings.dialogs.recoveryMessage(clock(notice.endedAt))}</p>
 	<footer>
-		<button onclick={onclose}>{strings.dialogs.recoveryKeep}</button>
-		<button onclick={edit}>{strings.dialogs.recoveryEdit}</button>
-		<button class="primary" onclick={resume}>{strings.dialogs.recoveryResume}</button>
+		<Button variant="secondary" onclick={onclose}>{strings.dialogs.recoveryKeep}</Button>
+		<Button variant="secondary" onclick={edit}>{strings.dialogs.recoveryEdit}</Button>
+		<Button variant="primary" onclick={resume}>{strings.dialogs.recoveryResume}</Button>
 	</footer>
 </dialog>

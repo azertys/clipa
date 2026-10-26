@@ -31,10 +31,49 @@ export function toZoned(ms: number, tzid: string) {
 	return Temporal.Instant.fromEpochMilliseconds(ms).toZonedDateTimeISO(tzid);
 }
 
-/** Local wall-clock time as HH:MM. */
-export function formatClock(ms: number, tzid: string): string {
+/** Local wall-clock time as HH:MM, or as 8:30 AM with hour12. */
+export function formatClock(ms: number, tzid: string, hour12 = false): string {
 	const z = toZoned(ms, tzid);
-	return `${pad2(z.hour)}:${pad2(z.minute)}`;
+	if (!hour12) return `${pad2(z.hour)}:${pad2(z.minute)}`;
+	return `${z.hour % 12 || 12}:${pad2(z.minute)} ${z.hour < 12 ? "AM" : "PM"}`;
+}
+
+/**
+ * "13:05", "1305", "9.30", "8:30 PM" or "8pm" as minutes since midnight.
+ * Null when the text is not a time.
+ */
+export function parseClock(text: string): number | null {
+	const m = /^\s*(\d{1,2})(?:[:.]?(\d{2}))?\s*([ap]\.?m\.?)?\s*$/i.exec(text);
+	if (!m || (m[2] === undefined && m[3] === undefined)) return null;
+	let h = Number(m[1]);
+	const min = Number(m[2] ?? "0");
+	if (min > 59) return null;
+	if (m[3]) {
+		if (h < 1 || h > 12) return null;
+		h = (h % 12) + (m[3][0].toLowerCase() === "p" ? 12 : 0);
+	}
+	return h > 23 ? null : h * 60 + min;
+}
+
+/** "1:45" (hours and minutes) or "105" (minutes) as ms. Null when the text is not a duration. */
+export function parseDuration(text: string): number | null {
+	const t = text.trim();
+	const hm = /^(\d+):(\d{2})$/.exec(t);
+	if (hm) return Number(hm[2]) < 60 ? (Number(hm[1]) * 60 + Number(hm[2])) * MINUTE : null;
+	return /^\d+$/.test(t) ? Number(t) * MINUTE : null;
+}
+
+/** UTC ms of a local date (YYYY-MM-DD) at `minutes` after midnight. A time in a DST gap moves forward. */
+export function atLocalMinutes(date: string, minutes: number, tzid: string): number {
+	return Temporal.PlainDate.from(date)
+		.toPlainDateTime({ hour: Math.floor(minutes / 60), minute: minutes % 60 })
+		.toZonedDateTime(tzid, { disambiguation: "compatible" }).epochMilliseconds;
+}
+
+/** Minutes since local midnight. */
+export function localMinutes(ms: number, tzid: string): number {
+	const z = toZoned(ms, tzid);
+	return z.hour * 60 + z.minute;
 }
 
 /** Local calendar date as YYYY-MM-DD. */
@@ -57,10 +96,13 @@ export function localDateStart(date: string, tzid: string): number {
 	return Temporal.PlainDate.from(date).toZonedDateTime({ timeZone: tzid }).epochMilliseconds;
 }
 
-/** UTC ms of local 00:00 on the Monday of the week that contains ms. */
-export function startOfLocalWeek(ms: number, tzid: string): number {
+/** 1 = weeks start on Monday, 7 = on Sunday (ISO day numbers). */
+export type WeekStart = 1 | 7;
+
+/** UTC ms of local 00:00 on the first day of the week that contains ms. */
+export function startOfLocalWeek(ms: number, tzid: string, weekStart: WeekStart = 1): number {
 	const day = toZoned(ms, tzid).startOfDay();
-	return day.subtract({ days: day.dayOfWeek - 1 }).startOfDay().epochMilliseconds;
+	return day.subtract({ days: (day.dayOfWeek - weekStart + 7) % 7 }).startOfDay().epochMilliseconds;
 }
 
 /** ISO 8601 local time with offset, for example 2026-10-26T09:00:00+02:00. */
@@ -89,19 +131,24 @@ export function startOfLocalMonth(ms: number, tzid: string, months = 0): number 
 
 export type RangePreset = "today" | "thisWeek" | "lastWeek" | "thisMonth" | "lastMonth";
 
-/** The half-open range [from, to) of a report preset. Weeks start on Monday. */
-export function presetRange(preset: RangePreset, now: number, tzid: string): { from: number; to: number } {
+/** The half-open range [from, to) of a report preset. */
+export function presetRange(
+	preset: RangePreset,
+	now: number,
+	tzid: string,
+	weekStart: WeekStart = 1,
+): { from: number; to: number } {
 	switch (preset) {
 		case "today": {
 			const from = startOfLocalDay(now, tzid);
 			return { from, to: addLocalDays(from, 1, tzid) };
 		}
 		case "thisWeek": {
-			const from = startOfLocalWeek(now, tzid);
+			const from = startOfLocalWeek(now, tzid, weekStart);
 			return { from, to: addLocalDays(from, 7, tzid) };
 		}
 		case "lastWeek": {
-			const to = startOfLocalWeek(now, tzid);
+			const to = startOfLocalWeek(now, tzid, weekStart);
 			return { from: addLocalDays(to, -7, tzid), to };
 		}
 		case "thisMonth":

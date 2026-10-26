@@ -2,8 +2,10 @@
 // Types only: this module emits no runtime code.
 // Names are camelCase versions of the spec's dotted names (docs/decisions.md, D2).
 import type { RPCSchema } from "electrobun/view";
+import type { Combo } from "../../core/entries";
 import type { ReportTable } from "../../core/export";
 import type { Report } from "../../core/reports";
+import type { WeekStart } from "../../core/time";
 import type {
 	CalendarEvent,
 	EditMode,
@@ -24,8 +26,14 @@ export type AppInfo = {
 
 export type Settings = {
 	defaultTagIds: string[];
-	/** Calendar: show tracked time as background events. */
+	/** Calendar: show tracked time next to the events. */
 	showTrackedTime: boolean;
+	/** Tray: show the elapsed time next to the icon. */
+	showTrayTimer: boolean;
+	weekStart: WeekStart;
+	hour12: boolean;
+	/** Timers shorter than 1 minute are not saved. */
+	discardShort: boolean;
 };
 
 export type Screen = "today" | "entries" | "calendar" | "reports" | "settings";
@@ -59,6 +67,10 @@ export type ClipaRPC = {
 			timerStart: { params: TimerInput; response: EntryWithTags };
 			timerStop: { params: {}; response: EntryWithTags | null };
 			timerStatus: { params: {}; response: EntryWithTags | null };
+			/** Deletes the running entry and stops the timer. */
+			timerDiscard: { params: {}; response: true };
+			/** The latest distinct note + tag combinations, as in the tray's Continue menu. */
+			timerRecent: { params: { limit: number }; response: Combo[] };
 			/** The note and tags typed while stopped. A tray start uses them too. */
 			timerDraft: { params: TimerInput; response: true };
 
@@ -73,6 +85,8 @@ export type ClipaRPC = {
 
 			settingsGet: { params: {}; response: Settings };
 			settingsSet: { params: Partial<Settings>; response: Settings };
+			/** Shows the database file in Finder. */
+			revealDatabase: { params: {}; response: true };
 
 			eventsInstances: { params: { from: number; to: number }; response: Instance[] };
 			eventsGet: { params: { id: string }; response: EventDetail | null };
@@ -82,8 +96,8 @@ export type ClipaRPC = {
 			eventsDeleteOccurrence: { params: OccurrenceRef; response: true };
 
 			reportsGet: { params: ReportQuery; response: Report };
-			/** Writes one report table as CSV to Downloads and shows it in Finder (D31). */
-			reportsExportCsv: { params: ReportQuery & { table: ReportTable }; response: { path: string } };
+			/** Writes report tables as CSV files to Downloads and shows them in Finder (D31). */
+			reportsExportCsv: { params: ReportQuery & { tables: ReportTable[] }; response: { paths: string[] } };
 		};
 		messages: {};
 	}>;

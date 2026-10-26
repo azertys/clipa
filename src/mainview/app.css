@@ -1,162 +1,78 @@
-:root {
-	color-scheme: light dark;
-	--bg: #ffffff;
-	--surface: #ffffff;
-	--sidebar: #f5f5f4;
-	--field: #ffffff;
-	--text: #1c1917;
-	--muted: #78716c;
-	--border: #e7e5e4;
-	--hover: #f0efed;
-	--selected: #e7e5e4;
-	--accent: #2563eb;
-	--accent-text: #ffffff;
-	--danger: #dc2626;
-	--warn: #d97706;
-	--tracked: #16a34a;
-	--error: #991b1b;
-	--error-bg: #fee2e2;
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		--bg: #1c1b1a;
-		--surface: #242322;
-		--sidebar: #1f1e1d;
-		--field: #2b2a28;
-		--text: #f5f5f4;
-		--muted: #a8a29e;
-		--border: #3a3836;
-		--hover: #2e2d2b;
-		--selected: #393735;
-		--accent: #60a5fa;
-		--accent-text: #0b1220;
-		--danger: #f87171;
-		--warn: #fbbf24;
-		--tracked: #22c55e;
-		--error: #fecaca;
-		--error-bg: #450a0a;
-	}
-}
-
-* {
-	box-sizing: border-box;
-}
-
-html,
-body {
-	margin: 0;
-	padding: 0;
-	height: 100%;
-	background: var(--bg);
-	color: var(--text);
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-	font-size: 13px;
-	-webkit-font-smoothing: antialiased;
-}
+/* Base styles on top of ui/tokens.css: plain form controls and dialogs.
+   :where() keeps these at zero specificity, so component styles always win. */
 
 #app {
 	height: 100vh;
 }
 
-h2 {
-	font-size: 14px;
-	margin: 0 0 8px;
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="color"])),
+:where(select),
+:where(textarea) {
+	height: 36px;
+	padding: 0 10px;
+	border: 1px solid var(--clipa-border-strong);
+	border-radius: var(--clipa-r);
+	background: var(--clipa-field);
+	color: var(--clipa-text);
+	font-size: 13px;
+	outline: none;
 }
 
-.muted {
-	color: var(--muted);
-}
-
-.card {
-	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: 10px;
-	padding: 16px;
-}
-
-button {
-	font: inherit;
-	color: inherit;
-	padding: 6px 12px;
-	border: 1px solid var(--border);
-	border-radius: 6px;
-	background: var(--surface);
-	cursor: pointer;
-}
-
-button:hover {
-	background: var(--hover);
-}
-
-button.primary {
-	background: var(--accent);
-	border-color: var(--accent);
-	color: var(--accent-text);
-	font-weight: 600;
-}
-
-button.primary.stop {
-	background: var(--danger);
-	border-color: var(--danger);
-}
-
-button.danger {
-	color: var(--danger);
-}
-
-button.ghost {
-	border: none;
-	background: none;
-	font-size: 16px;
-	padding: 2px 8px;
-}
-
-input,
-select,
-textarea {
-	font: inherit;
-	color: var(--text);
-	background: var(--field);
-	border: 1px solid var(--border);
-	border-radius: 6px;
-	padding: 6px 8px;
-}
-
-textarea {
+:where(textarea) {
+	height: auto;
+	padding: 8px 10px;
 	resize: vertical;
 	width: 100%;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
+:where(input, select, textarea):focus {
+	border-color: var(--clipa-accent);
+}
+
+:where(input[type="checkbox"], input[type="radio"]) {
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	accent-color: var(--clipa-accent);
+}
+
+button {
+	cursor: default;
+}
+
+:where(dialog):focus-visible {
 	outline: none;
-	border-color: var(--accent);
 }
 
-:focus-visible {
-	outline: 2px solid var(--accent);
-	outline-offset: 1px;
-}
-
-dialog {
-	max-width: 420px;
-	border: 1px solid var(--border);
-	border-radius: 12px;
+:where(dialog) {
+	max-width: 440px;
 	padding: 20px;
-	background: var(--surface);
-	color: var(--text);
-	box-shadow: 0 20px 60px rgb(0 0 0 / 0.3);
+	border: 1px solid var(--clipa-border-raised);
+	border-radius: var(--clipa-r-card);
+	background: var(--clipa-surface);
+	color: var(--clipa-text);
+	box-shadow: var(--clipa-shadow);
 }
 
 dialog::backdrop {
-	background: rgb(0 0 0 / 0.35);
+	background: var(--clipa-backdrop);
+}
+
+dialog h2 {
+	margin: 0 0 6px;
+	font-size: 16px;
+	font-weight: 650;
+}
+
+dialog p {
+	margin: 0;
+	font-size: 13px;
+	color: var(--clipa-text-2);
 }
 
 dialog footer {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
-	margin-top: 16px;
+	margin-top: 18px;
 }

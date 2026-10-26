@@ -1,40 +1,42 @@
 <script lang="ts">
-	import { entryInterval, firstLine, trackedMs } from "../../../core/entries";
-	import { overlappingIds } from "../../../core/overlap";
+	import { entryInterval, type Combo } from "../../../core/entries";
+	import { length, overlappingIds } from "../../../core/overlap";
 	import { coverageList, trackedIntervals } from "../../../core/reports";
-	import {
-		addLocalDays,
-		formatClock,
-		formatDuration,
-		formatElapsed,
-		formatPercent,
-		startOfLocalDay,
-	} from "../../../core/time";
+	import { addLocalDays, formatDuration, localDate, startOfLocalDay } from "../../../core/time";
 	import type { EntryWithTags, Instance } from "../../../core/types";
-	import TagCombobox from "../components/TagCombobox.svelte";
-	import TagList from "../components/TagList.svelte";
 	import { app, tz } from "../lib/app.svelte";
+	import { longDay } from "../lib/dates";
 	import { api } from "../lib/rpc";
 	import { strings } from "../strings";
+	import Card from "../ui/Card.svelte";
+	import DayTimeline from "../ui/DayTimeline.svelte";
+	import EntryRow from "../ui/EntryRow.svelte";
+	import EventList from "../ui/EventList.svelte";
+	import PageHeader from "../ui/PageHeader.svelte";
+	import TimerCard from "../ui/TimerCard.svelte";
 
 	let entries = $state<EntryWithTags[]>([]);
 	let instances = $state<Instance[]>([]);
+	let recent = $state<Combo[]>([]);
 
 	const dayStart = $derived(startOfLocalDay(app.now, tz));
 	const dayEnd = $derived(addLocalDays(dayStart, 1, tz));
-	const elapsed = $derived(app.running ? app.now - app.running.started_at : 0);
-	const total = $derived(trackedMs(entries, dayStart, dayEnd, app.now));
-	const overlaps = $derived(
-		overlappingIds(entries.map((e) => ({ id: e.id, ...entryInterval(e, app.now) }))),
-	);
+	const title = $derived(longDay(localDate(dayStart, tz)));
 
+	// The running entry shows in the timer card, so the list has the closed entries only.
+	const closed = $derived(entries.filter((e) => e.ended_at !== null));
 	const tracked = $derived(trackedIntervals(entries, dayStart, dayEnd, app.now));
+	const closedTracked = $derived(trackedIntervals(closed, dayStart, dayEnd, app.now));
+	const timed = $derived(instances.filter((i) => !i.allDay));
 	const events = $derived(coverageList(instances, tracked, dayStart, dayEnd));
+	const plannedMs = $derived(events.reduce((s, e) => s + e.plannedMs, 0));
+	const overlaps = $derived(overlappingIds(entries.map((e) => ({ id: e.id, ...entryInterval(e, app.now) }))));
 
 	async function load() {
-		[entries, instances] = await Promise.all([
+		[entries, instances, recent] = await Promise.all([
 			api.entriesList({ from: dayStart, to: dayEnd }),
 			api.eventsInstances({ from: dayStart, to: dayEnd }),
+			api.timerRecent({ limit: 3 }),
 		]);
 	}
 
@@ -43,205 +45,95 @@
 		void [dayStart, app.revision, app.running?.id];
 		void load();
 	});
+
+	function startFromEvent(event: Instance) {
+		void app.continueWith({ note: event.title, tagIds: app.tagIds });
+	}
 </script>
 
-<section class="today">
-	<div class="timer card">
-		<div class="clock" class:live={app.running}>
-			<span class="elapsed">{formatElapsed(elapsed)}</span>
-			<span class="state">{app.running ? strings.timer.running : strings.timer.stopped}</span>
-		</div>
-		<button class="primary big" class:stop={app.running} onclick={() => app.toggleTimer()}>
-			{app.running ? strings.timer.stop : strings.timer.start}
-		</button>
-		<textarea
-			rows="3"
-			placeholder={strings.timer.notePlaceholder}
-			value={app.note}
-			oninput={(e) => app.editTimer({ note: e.currentTarget.value })}
-		></textarea>
-		<TagCombobox selected={app.tagIds} onchange={(ids) => app.editTimer({ tagIds: ids })} />
-	</div>
+<PageHeader title={strings.nav.today} subtitle={title}>
+	{#snippet aside()}
+		<span>{strings.today.tracked} <strong>{formatDuration(length(tracked))}</strong></span>
+		<span>{strings.today.planned} <strong>{formatDuration(plannedMs)}</strong></span>
+	{/snippet}
+</PageHeader>
 
-	<div class="card">
-		<header class="row">
-			<h2>{strings.today.entriesTitle}</h2>
-			<span class="total">{strings.today.total} <strong>{formatDuration(total)}</strong></span>
-		</header>
-		{#if entries.length === 0}
-			<p class="muted">{strings.today.empty}</p>
-		{:else}
-			<ul class="entries">
-				{#each entries as entry (entry.id)}
-					<li>
-						<button
-							class="entry"
-							onclick={() => app.navigate({ screen: "entries", entryId: entry.id })}
-						>
-							<span class="time">
-								{formatClock(entry.started_at, tz)}–{entry.ended_at ? formatClock(entry.ended_at, tz) : strings.entries.running}
-							</span>
-							<span class="note">
-								{#if overlaps.has(entry.id)}<span class="warn" title={strings.entries.overlap}>⚠︎</span>{/if}
-								{firstLine(entry.note) || strings.entries.noNote}
-							</span>
-							<TagList ids={entry.tagIds} />
-							<span class="dur">{formatDuration((entry.ended_at ?? app.now) - entry.started_at)}</span>
-						</button>
-					</li>
-				{/each}
-			</ul>
-		{/if}
-	</div>
+<TimerCard
+	running={app.running}
+	now={app.now}
+	note={app.note}
+	tagIds={app.tagIds}
+	continueWith={recent}
+	onnote={(note) => app.editTimer({ note })}
+	ontags={(tagIds) => app.editTimer({ tagIds })}
+	onstart={() => app.toggleTimer()}
+	onstop={() => app.toggleTimer()}
+	ondiscard={() => app.discardTimer()}
+	oncontinue={(combo) => app.continueWith(combo)}
+	onstartedat={(ms) => app.setStartedAt(ms)}
+/>
 
-	<div class="card">
-		<h2>{strings.today.eventsTitle}</h2>
-		{#if events.length === 0}
-			<p class="muted">{strings.today.eventsEmpty}</p>
-		{:else}
-			<ul class="events">
-				{#each events as e (`${e.instance.eventId}:${e.instance.originalStart}`)}
-					<li>
-						<button class="event" onclick={() => (app.screen = "calendar")}>
-							<span class="time">{formatClock(e.instance.start, tz)}–{formatClock(e.instance.end, tz)}</span>
-							<span class="note">
-								<span class="dot" style:background={e.instance.color ?? "var(--accent)"}></span>
-								{e.instance.title || strings.calendar.untitled}
-							</span>
-							<span class="bar" aria-hidden="true">
-								{#each e.segments as seg (seg.start)}
-									<span
-										style:left="{((seg.start - Math.max(e.instance.start, dayStart)) / e.plannedMs) * 100}%"
-										style:width="{((seg.end - seg.start) / e.plannedMs) * 100}%"
-									></span>
-								{/each}
-							</span>
-							<span class="dur">
-								{strings.today.coverage(formatDuration(e.trackedMs), formatDuration(e.plannedMs), formatPercent(e.coverage))}
-							</span>
-						</button>
-					</li>
-				{/each}
-			</ul>
-		{/if}
+<DayTimeline
+	events={timed}
+	tracked={closedTracked}
+	runningSince={app.running?.started_at ?? null}
+	now={app.now}
+	{dayStart}
+	{dayEnd}
+/>
+
+<div class="cols">
+	<div class="main">
+		<Card title={strings.today.entriesTitle} list>
+			{#snippet meta()}
+				{strings.today.entriesMeta(closed.length)}<strong>{formatDuration(length(closedTracked))}</strong>{app.running
+					? strings.today.plusRunning
+					: ""}
+			{/snippet}
+			{#if closed.length === 0}
+				<p class="empty">{strings.today.empty}</p>
+			{/if}
+			{#each closed as entry (entry.id)}
+				<EntryRow
+					{entry}
+					now={app.now}
+					overlap={overlaps.has(entry.id)}
+					onopen={(e) => app.navigate({ screen: "entries", entryId: e.id })}
+					oncontinue={(e) => app.continueWith(e)}
+				/>
+			{/each}
+		</Card>
 	</div>
-</section>
+	<div class="side">
+		<Card title={strings.today.eventsTitle}>
+			{#snippet meta()}{strings.today.planned} <strong>{formatDuration(plannedMs)}</strong>{/snippet}
+			<EventList {events} now={app.now} onstarttimer={startFromEvent} />
+		</Card>
+	</div>
+</div>
 
 <style>
-	.today {
-		display: grid;
-		gap: 16px;
-		max-width: 760px;
+	.cols {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 20px;
+		align-items: flex-start;
 	}
-	.timer {
-		display: grid;
-		grid-template-columns: 1fr auto;
-		gap: 12px;
-		align-items: center;
+	.main {
+		flex: 999 1 480px;
+		min-width: 0;
 	}
-	.timer textarea,
-	.timer :global(.combo) {
-		grid-column: 1 / -1;
-	}
-	.clock {
+	.side {
+		flex: 1 1 300px;
+		min-width: 0;
 		display: flex;
 		flex-direction: column;
+		gap: 20px;
 	}
-	.elapsed {
-		font-size: 40px;
-		font-weight: 600;
-		font-variant-numeric: tabular-nums;
-		letter-spacing: -0.5px;
-	}
-	.state {
-		font-size: 12px;
-		color: var(--muted);
-	}
-	.clock.live .state {
-		color: var(--accent);
-	}
-	.big {
-		min-width: 110px;
-		padding: 10px 20px;
-		font-size: 15px;
-	}
-	.row {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-	}
-	.total {
-		color: var(--muted);
-	}
-	.total strong {
-		color: var(--text);
-		font-variant-numeric: tabular-nums;
-	}
-	.entries,
-	.events {
-		list-style: none;
+	.empty {
 		margin: 0;
-		padding: 0;
-	}
-	.entry,
-	.event {
-		display: grid;
-		grid-template-columns: 110px 1fr auto 56px;
-		gap: 12px;
-		align-items: center;
-		width: 100%;
-		padding: 8px 6px;
-		border: none;
-		border-top: 1px solid var(--border);
-		background: none;
-		color: inherit;
-		font: inherit;
-		text-align: left;
-		cursor: pointer;
-	}
-	.event {
-		grid-template-columns: 110px 1fr 120px 150px;
-	}
-	.entry:hover,
-	.event:hover {
-		background: var(--hover);
-	}
-	.dot {
-		display: inline-block;
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		margin-right: 6px;
-	}
-	.bar {
-		position: relative;
-		height: 8px;
-		border-radius: 4px;
-		background: var(--selected);
-		overflow: hidden;
-	}
-	.bar span {
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		background: var(--tracked);
-	}
-	.time,
-	.dur {
-		font-variant-numeric: tabular-nums;
-		color: var(--muted);
-	}
-	.dur {
-		text-align: right;
-		color: var(--text);
-	}
-	.note {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	.warn {
-		color: var(--warn);
-		margin-right: 4px;
+		padding: 4px 16px 12px;
+		font-size: 13px;
+		color: var(--clipa-muted);
 	}
 </style>

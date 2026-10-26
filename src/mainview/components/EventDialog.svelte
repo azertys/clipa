@@ -8,6 +8,7 @@
 	import { app, tz } from "../lib/app.svelte";
 	import { api } from "../lib/rpc";
 	import { strings } from "../strings";
+	import Button from "../ui/Button.svelte";
 	import RepeatEditor from "./RepeatEditor.svelte";
 
 	let {
@@ -233,13 +234,13 @@
 			</label>
 			<footer>
 				{#if !isNew}
-					<button type="button" class="danger" onclick={remove} disabled={busy}>
+					<Button variant="danger" onclick={remove} disabled={busy}>
 						{confirmDelete ? strings.event.confirmDelete : strings.event.delete}
-					</button>
+					</Button>
 				{/if}
 				<span class="spacer"></span>
-				<button type="button" onclick={() => cancel()}>{strings.event.cancel}</button>
-				<button type="submit" class="primary" disabled={busy}>{strings.event.save}</button>
+				<Button variant="secondary" onclick={() => cancel()}>{strings.event.cancel}</Button>
+				<Button type="submit" variant="primary" disabled={busy}>{strings.event.save}</Button>
 			</footer>
 		</form>
 	{/if}
@@ -247,14 +248,16 @@
 
 <style>
 	dialog {
-		width: 440px;
+		width: 460px;
 		max-width: calc(100vw - 40px);
 	}
 	form {
 		display: grid;
-		gap: 12px;
+		gap: 14px;
+		margin-top: 12px;
 	}
 	.title {
+		height: 40px;
 		font-size: 15px;
 		font-weight: 600;
 	}
@@ -266,21 +269,22 @@
 	label,
 	.field {
 		display: grid;
-		gap: 4px;
+		gap: 5px;
 		font-size: 12px;
-		color: var(--muted);
+		font-weight: 600;
+		color: var(--clipa-muted);
 	}
 	label > :global(*),
 	.field > :global(:not(span)) {
-		color: var(--text);
-		font-size: 13px;
+		font-weight: 400;
 	}
 	label.check {
 		display: flex;
 		align-items: center;
-		gap: 6px;
-		color: var(--text);
+		gap: 8px;
+		color: var(--clipa-text-2);
 		font-size: 13px;
+		font-weight: 400;
 	}
 	.colors {
 		display: flex;
@@ -294,10 +298,10 @@
 		border: 2px solid transparent;
 	}
 	.swatch.default {
-		background: var(--accent);
+		background: var(--clipa-event);
 	}
 	.swatch.on {
-		border-color: var(--text);
+		border-color: var(--clipa-text);
 	}
 	footer {
 		margin-top: 4px;

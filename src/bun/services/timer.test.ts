@@ -178,3 +178,30 @@ describe("heartbeat and crash recovery", () => {
 		expect(new TimerService({ db: t.db, ctx: t.ctx }).recover()).toEqual({ kind: "none" });
 	});
 });
+
+describe("discard and short entries", () => {
+	test("discard deletes the running entry and stops the timer", () => {
+		const { db, ctx, timer, advance, changes } = setup();
+		const entry = timer.start({ note: "Oops", tagIds: [] });
+		advance(5 * MIN);
+		timer.discard();
+		expect(timer.status()).toBeNull();
+		expect(getEntry(db, entry.id)).toMatchObject({ deleted_at: ctx.now(), ended_at: ctx.now() });
+		expect(timerState(db)).toEqual({ entry_id: null, heartbeat_at: null });
+		expect(changes).toEqual([entry.id, null]);
+	});
+
+	test("with a minimum of 1 minute, a 40-second timer is not saved", () => {
+		const t = testDb();
+		let min = 60 * SEC;
+		const timer = new TimerService({ db: t.db, ctx: t.ctx, minEntryMs: () => min });
+		const short = timer.start({ note: "", tagIds: [] });
+		t.advance(40 * SEC);
+		expect(timer.stop()).toBeNull();
+		expect(getEntry(t.db, short.id)!.deleted_at).toBe(t.ctx.now());
+		min = 0;
+		timer.start({ note: "", tagIds: [] });
+		t.advance(40 * SEC);
+		expect(timer.stop()?.ended_at).toBe(t.ctx.now());
+	});
+});

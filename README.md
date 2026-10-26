@@ -31,6 +31,7 @@ The dev build keeps its database at
 core/            pure TypeScript domain logic and its tests (no Electrobun, Svelte or SQLite)
 src/bun/         main process: database, timer, tray, native calls, RPC handlers
 src/mainview/    Svelte 5 view; all UI strings are in strings.ts
+src/mainview/ui/ design tokens and components (from clipa-ui-svelte)
 src/shared/      the typed RPC contract
 native/macos/    Swift package that builds libclipanative.dylib
 assets/          logo, tray icons and the app icon set (see assets/README.md)

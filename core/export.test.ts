@@ -31,6 +31,7 @@ describe("CSV", () => {
 describe("report tables", () => {
 	const report: Report = {
 		range: { from: at("00:00"), to: at("00:00") + 24 * HOUR, tzid: "Europe/Bucharest" },
+		entryCount: 1,
 		totals: { trackedMs: 2 * HOUR, plannedMs: 4 * HOUR, coveredMs: 2 * HOUR, outsideEventsMs: 0 },
 		days: [{ date: "2026-10-26", trackedMs: 2 * HOUR, plannedMs: 4 * HOUR, coveredMs: 2 * HOUR }],
 		events: [
@@ -40,6 +41,7 @@ describe("report tables", () => {
 				title: "Planning, part 1",
 				color: null,
 				allDay: false,
+				recurring: false,
 				start: at("08:00"),
 				end: at("12:00"),
 				partial: false,

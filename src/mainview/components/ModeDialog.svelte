@@ -2,6 +2,7 @@
 	import type { EditMode } from "../../../core/types";
 	import type { ModeRequest } from "../lib/calendar";
 	import { strings } from "../strings";
+	import Button from "../ui/Button.svelte";
 
 	let { request, onchoose }: { request: ModeRequest; onchoose: (mode: EditMode | null) => void } = $props();
 
@@ -40,8 +41,8 @@
 		{#if !request.allowThis}<p class="muted">{strings.mode.thisDisabled}</p>{/if}
 		{#if request.warnings[mode]}<p class="warn">{request.warnings[mode]}</p>{/if}
 		<footer>
-			<button type="button" onclick={() => cancel()}>{strings.mode.cancel}</button>
-			<button type="submit" class="primary">{strings.mode.ok}</button>
+			<Button variant="secondary" onclick={() => cancel()}>{strings.mode.cancel}</Button>
+			<Button type="submit" variant="primary">{strings.mode.ok}</Button>
 		</footer>
 	</form>
 </dialog>
@@ -63,13 +64,13 @@
 		align-items: center;
 	}
 	label.disabled {
-		color: var(--muted);
+		color: var(--clipa-faint);
 	}
 	p {
 		margin: 10px 0 0;
 		font-size: 12px;
 	}
 	.warn {
-		color: var(--warn);
+		color: var(--clipa-event-soft);
 	}
 </style>

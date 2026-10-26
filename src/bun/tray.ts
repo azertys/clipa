@@ -4,6 +4,7 @@ import { firstLine, recentCombos, type Combo } from "../../core/entries";
 import { formatDuration } from "../../core/time";
 import { strings } from "../mainview/strings";
 import { recentEntries } from "./db/entries";
+import { readSettings } from "./db/settings";
 import { listTags } from "./db/tags";
 import type { TimerService } from "./services/timer";
 
@@ -59,7 +60,8 @@ export class ClipaTray {
 
 	private updateTitle() {
 		const running = this.timer.status();
-		this.tray.setTitle(running ? formatDuration(this.now() - running.started_at) : "");
+		const show = running !== null && readSettings(this.db).showTrayTimer;
+		this.tray.setTitle(show ? formatDuration(this.now() - running.started_at) : "");
 	}
 
 	private menu(running: boolean): MenuItemConfig[] {

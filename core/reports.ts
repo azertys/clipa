@@ -65,9 +65,11 @@ export type ReportInput = {
 
 export type AppTime = { appId: string; ms: number };
 
-/** The spec's Report, plus planned time, color and all-day on each event. */
+/** The spec's Report, plus the entry count, and planned time, color, all-day and recurring on each event. */
 export type Report = {
 	range: { from: number; to: number; tzid: string };
+	/** Entries with time inside the range. */
+	entryCount: number;
 	totals: { trackedMs: number; plannedMs: number; coveredMs: number; outsideEventsMs: number };
 	days: { date: string; trackedMs: number; plannedMs: number; coveredMs: number }[];
 	events: (EventCoverage & {
@@ -76,6 +78,7 @@ export type Report = {
 		title: string;
 		color: string | null;
 		allDay: boolean;
+		recurring: boolean;
 		start: number;
 		end: number;
 		apps: AppTime[];
@@ -133,6 +136,7 @@ export function buildReport(input: ReportInput): Report {
 		title: i.title,
 		color: i.color,
 		allDay: i.allDay,
+		recurring: i.recurring,
 		start: i.start,
 		end: i.end,
 		...eventCoverage(i, tracked, from, to),
@@ -175,6 +179,7 @@ export function buildReport(input: ReportInput): Report {
 
 	return {
 		range: { from, to, tzid },
+		entryCount: input.entries.filter((e) => clip([entryInterval(e, now)], from, to).length > 0).length,
 		totals: {
 			trackedMs: length(tracked),
 			plannedMs: length(planned),

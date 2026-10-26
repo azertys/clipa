@@ -12,7 +12,7 @@ import { deviceId, readSettings } from "./db/settings";
 import { dylibPath, loadMacTracker } from "./native/macos";
 import { nullTracker, type NativeTracker } from "./native/tracker";
 import { createRpc, type ClipaBunRpc } from "./rpc";
-import { TimerService } from "./services/timer";
+import { SHORT_ENTRY_MS, TimerService } from "./services/timer";
 import { ClipaTray } from "./tray";
 
 const DEV_SERVER_URL = "http://localhost:5173";
@@ -60,6 +60,7 @@ let draft: { note: string; tagIds: string[] } | null = null;
 const timer = new TimerService({
 	db,
 	ctx,
+	minEntryMs: () => (readSettings(db).discardShort ? SHORT_ENTRY_MS : 0),
 	onChange: (entry: EntryWithTags | null) => {
 		draft = null;
 		tray?.refresh();

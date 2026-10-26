@@ -1,7 +1,8 @@
 // Shared view state: the running entry, tags, settings, the clock and navigation.
+import { formatClock } from "../../../core/time";
 import type { EntryWithTags, Tag } from "../../../core/types";
 import type { Navigation, RecoveryNotice, Screen, Settings } from "../../shared/rpc-schema";
-import { errorText } from "../strings";
+import { errorText, strings } from "../strings";
 import { api, onMessage } from "./rpc";
 
 export const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -14,7 +15,14 @@ class AppState {
 	panelEntryId = $state<string | null>(null);
 	running = $state<EntryWithTags | null>(null);
 	tags = $state<Tag[]>([]);
-	settings = $state<Settings>({ defaultTagIds: [], showTrackedTime: true });
+	settings = $state<Settings>({
+		defaultTagIds: [],
+		showTrackedTime: true,
+		showTrayTimer: true,
+		weekStart: 1,
+		hour12: false,
+		discardShort: false,
+	});
 	/** Updated every second, for elapsed time. */
 	now = $state(Date.now());
 	/** Bumped when entries change. Screens reload when it changes. */
@@ -80,6 +88,37 @@ class AppState {
 		this.revision++;
 	}
 
+	/** Starts a new entry with this note and tags. A running entry stops first. */
+	async continueWith(combo: { note: string; tagIds: string[] }) {
+		if (this.running) {
+			await this.saveRunning();
+			if ((await this.attempt(() => api.timerStop({}))) === undefined) return;
+			this.setRunning(null);
+		}
+		const entry = await this.attempt(() => api.timerStart({ note: combo.note, tagIds: combo.tagIds }));
+		if (entry) this.setRunning(entry);
+		this.revision++;
+	}
+
+	/** Deletes the running entry and stops the timer. */
+	async discardTimer() {
+		this.cancelSave();
+		if (await this.attempt(() => api.timerDiscard({}))) this.setRunning(null);
+		this.revision++;
+	}
+
+	/** Moves the start of the running entry. */
+	async setStartedAt(ms: number) {
+		const running = this.running;
+		if (!running) return;
+		this.cancelSave();
+		const saved = await this.attempt(() =>
+			api.entriesUpsert({ ...running, started_at: ms, note: this.note, tagIds: this.tagIds }),
+		);
+		if (saved && this.running?.id === saved.id) this.running = saved;
+		this.revision++;
+	}
+
 	private async saveRunning() {
 		this.cancelSave();
 		const running = this.running;
@@ -119,6 +158,16 @@ function sameIds(a: string[], b: string[]) {
 }
 
 export const app = new AppState();
+
+/** A local clock time in the user's time format. */
+export const clock = (ms: number) => formatClock(ms, tz, app.settings.hour12);
+
+/** "08:30–10:05". An open end shows "now". */
+export const clockRange = (start: number, end: number | null) =>
+	`${clock(start)}–${end === null ? strings.common.now : clock(end)}`;
+
+/** A tag's color, or the accent for a tag without one. */
+export const tagColor = (tag: Pick<Tag, "color"> | undefined) => tag?.color ?? "var(--clipa-accent)";
 
 onMessage("timerChanged", ({ entry }) => app.setRunning(entry));
 onMessage("dataChanged", () => {

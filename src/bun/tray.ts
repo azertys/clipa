@@ -18,11 +18,13 @@ type TrayIcons = { idle: string; running: string; template: boolean };
 function trayIcons(): TrayIcons {
 	switch (platform) {
 		case "macos":
-			// 32 px images shown at 16 pt, so they stay sharp on Retina menu bars. Both are template
-			// images with the same shape; the elapsed time next to the icon shows that the timer runs.
+			// A template image, 32 px shown at 16 pt so it stays sharp on Retina menu bars: macOS
+			// colors it for a light or dark menu bar. One image for both states, because Electrobun's
+			// setImage drops the template flag (the icon turns black). The elapsed time next to the
+			// icon shows that the timer runs.
 			return {
 				idle: "views://tray/ClipaTrayIdleTemplate@2x.png",
-				running: "views://tray/ClipaTrayRunningTemplate@2x.png",
+				running: "views://tray/ClipaTrayIdleTemplate@2x.png",
 				template: true,
 			};
 		case "windows": {
@@ -61,6 +63,8 @@ export type TrayActions = {
 export class ClipaTray {
 	private readonly tray: Tray;
 	private readonly icons = trayIcons();
+	/** The image shown now. It is set again only when it changes. */
+	private image = this.icons.idle;
 	private titleTimer: ReturnType<typeof setInterval> | null = null;
 
 	constructor(
@@ -83,7 +87,11 @@ export class ClipaTray {
 	/** Updates the icon, title and menu from the database. */
 	refresh(): void {
 		const running = this.timer.status();
-		this.tray.setImage(running ? this.icons.running : this.icons.idle);
+		const image = running ? this.icons.running : this.icons.idle;
+		if (image !== this.image) {
+			this.image = image;
+			this.tray.setImage(image);
+		}
 		this.updateTitle();
 		if (running && !this.titleTimer) {
 			this.titleTimer = setInterval(() => this.updateTitle(), TITLE_REFRESH_MS);

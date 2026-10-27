@@ -51,8 +51,9 @@ export default {
 		watchIgnore: ["dist/**", "native/macos/.build/**"],
 		mac: {
 			bundleCEF: false,
-			// Made from assets/logo/clipa-mark.svg by scripts/make-app-icon.swift.
-			icons: "assets/icon.iconset",
+			// An Icon Composer icon: the clock is a layer, so macOS draws the light, dark, clear and
+			// tinted styles. Hutch compiles it with Xcode's actool (Assets.car and an .icns fallback).
+			icons: "assets/Clipa.icon",
 			// Hutch also signs the nested Mach-O files, so the dylib gets the app's identity (spec section 8).
 			codesign: signed,
 			notarize: notarized,

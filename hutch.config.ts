@@ -10,6 +10,7 @@ export default {
 		"build:canary": "hutch electrobun prepare && hutch pm exec -- vite build && hutch electrobun build --env=canary",
 		native: ["swift", "build", "-c", "release", "--package-path", "native/macos"],
 		icon: ["swift", "scripts/make-app-icon.swift", "assets/logo/clipa-mark.svg", "assets/icon.iconset"],
+		"icon:mac": ["swift", "scripts/make-icon-mark.swift", "assets/Clipa.icon/Assets/clock.svg"],
 		test: ["hutch", "test", "core", "src/bun", "src/shared"],
 		check: "hutch electrobun prepare && hutch pm exec -- svelte-check --tsconfig ./tsconfig.json",
 	},

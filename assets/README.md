@@ -36,6 +36,16 @@ The taskbar theme is `SystemUsesLightTheme` under `HKCU\Software\Microsoft\Windo
 
 The single-size PNGs are in `tray/windows/png/`.
 
+## App icon
+
+`Clipa.icon` is the macOS app icon, an Icon Composer document. The clock (`Assets/clock.svg`, made
+by `hutch run icon:mac` as one filled outline, because the compiled icon keeps neither strokes nor
+arcs) is a layer on a solid fill, with a color for each appearance in `icon.json`: an ink clock on white, a
+white clock on ink in dark mode, and a white clock in the clear and tinted styles. Open it in Icon Composer
+(it comes with Xcode 26) to change it. Hutch compiles it with Xcode's `actool`.
+
+`icon.iconset` is the flat icon for Windows and Linux, made by `scripts/make-app-icon.swift`.
+
 ## Sources
 
 `tray/svg/` has the three states drawn on a 16 px grid, with a black ring. `logo/` has the mark, the wordmark, and the lockup in ink and in white.

@@ -1,5 +1,6 @@
-// Draws the macOS app icon set from the logo mark: the ink mark on a white rounded square,
-// on Apple's 1024 px grid (824 px body, 100 px margin).
+// Draws the flat app icon set from the logo mark: the ink mark on a white rounded square,
+// on Apple's 1024 px grid (824 px body, 100 px margin). Windows and Linux use it; macOS uses
+// assets/Clipa.icon, which has light, dark, clear and tinted styles.
 // Run: swift scripts/make-app-icon.swift assets/logo/clipa-mark.svg assets/icon.iconset
 import AppKit
 

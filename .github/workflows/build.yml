@@ -66,7 +66,10 @@ jobs:
           Join-Path $HOME ".hutch\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
       - run: hutch run install
+      # svelte-check cannot load vite.config.ts or svelte.config.js on Windows. The types are the
+      # same on each OS, so Linux checks them.
       - run: hutch run check
+        if: runner.os == 'Linux'
       - run: hutch run test
       # Unsigned: the signing variables of docs/release.md are not set here.
       - run: hutch run build

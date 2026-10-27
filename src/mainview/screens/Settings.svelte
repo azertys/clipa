@@ -106,7 +106,7 @@
 	}
 
 	function showSaved(path: string) {
-		dataNotice = strings.settings.exported(path.split("/").pop() ?? path);
+		dataNotice = strings.settings.exported(path.split(/[\\/]/).pop() ?? path);
 		clearTimeout(noticeTimer);
 		noticeTimer = setTimeout(() => (dataNotice = null), 5000);
 	}

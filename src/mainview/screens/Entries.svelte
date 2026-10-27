@@ -128,7 +128,7 @@
 		const ids = filtered.map((e) => e.id);
 		const saved = await app.attempt(() => api.entriesExportCsv({ tzid: tz, range: { from, to }, ids }));
 		if (!saved) return;
-		notice = strings.entries.exported(saved.path.split("/").pop() ?? saved.path);
+		notice = strings.entries.exported(saved.path.split(/[\\/]/).pop() ?? saved.path);
 		clearTimeout(noticeTimer);
 		noticeTimer = setTimeout(() => (notice = null), 5000);
 	}

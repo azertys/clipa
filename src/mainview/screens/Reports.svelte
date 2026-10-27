@@ -92,7 +92,7 @@
 		if (!saved) return;
 		notice =
 			saved.paths.length === 1
-				? strings.reports.exported(saved.paths[0].split("/").pop() ?? saved.paths[0])
+				? strings.reports.exported(saved.paths[0].split(/[\\/]/).pop() ?? saved.paths[0])
 				: strings.reports.exportedMany(saved.paths.length);
 		clearTimeout(noticeTimer);
 		noticeTimer = setTimeout(() => (notice = null), 5000);

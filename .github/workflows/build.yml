@@ -1,7 +1,8 @@
 # Builds Clipa for Windows and Linux. Hutch builds only for the OS it runs on, so each OS has its
 # own runner (docs/release.md). The macOS build comes from a Mac (`hutch run build`): a macOS
 # runner uses the free minutes 10 times as fast. Start it from the Actions tab, or push a tag such
-# as v0.2.0. Each run keeps the files of artifacts/ as one download per OS, for 7 days.
+# as v0.2.0. Each run keeps the files of artifacts/ as one download per OS, for 7 days. A tag also
+# puts the files on a draft GitHub release for that tag (docs/release.md, section 6).
 name: Build
 
 on:
@@ -28,6 +29,18 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+
+      # A release must have the version of its tag (docs/release.md, section 2).
+      - name: Check the version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          for version in $(grep -ohE 'version: "[^"]+"' electrobun.config.ts src/bun/index.ts | cut -d '"' -f 2); do
+            if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+              echo "::error::The tag is $GITHUB_REF_NAME, but the app version is $version."
+              exit 1
+            fi
+          done
 
       # The Hutch releases and toolchains that hutch.config.ts pins.
       - uses: actions/cache@v5
@@ -65,3 +78,27 @@ jobs:
           if-no-files-found: error
           # The free plan stores 500 MB; one run uploads about 100 MB.
           retention-days: 7
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: release
+          merge-multiple: true
+
+      # A draft, so the Mac files can be added before it is published.
+      - name: Add the files to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" > /dev/null 2>&1 ||
+            gh release create "$TAG" --draft --verify-tag --title "Clipa ${TAG#v}" --generate-notes
+          gh release upload "$TAG" release/* --clobber

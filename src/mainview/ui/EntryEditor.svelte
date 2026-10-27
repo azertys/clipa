@@ -12,11 +12,12 @@
 	} from "../../../core/time";
 	import type { EntryInput, EntryWithTags } from "../../../core/types";
 	import { clock, tz } from "../lib/app.svelte";
+	import { primaryKey, shortcut } from "../lib/keys";
 	import { strings } from "../strings";
 	import Button from "./Button.svelte";
 	import TagInput from "./TagInput.svelte";
 
-	// A local draft: nothing changes until Save (⌘↵). Esc cancels. A change to Start or End updates
+	// A local draft: nothing changes until Save (⌘↵, Ctrl+↵). Esc cancels. A change to Start or End updates
 	// the duration; a change to Duration updates End. An End before the Start is on the next day.
 	let {
 		entry,
@@ -83,7 +84,7 @@
 			e.stopPropagation();
 			oncancel();
 		}
-		if (e.key === "Enter" && e.metaKey) {
+		if (e.key === "Enter" && primaryKey(e)) {
 			e.preventDefault();
 			e.stopPropagation();
 			save();
@@ -144,7 +145,7 @@
 		{/if}
 		<span class="spacer"></span>
 		<Button size="sm" variant="secondary" onclick={oncancel}>{strings.common.cancel}</Button>
-		<Button type="submit" size="sm" variant="primary" kbd="⌘↵" disabled={!valid}>{strings.common.save}</Button>
+		<Button type="submit" size="sm" variant="primary" kbd={shortcut("↵")} disabled={!valid}>{strings.common.save}</Button>
 	</div>
 </form>
 

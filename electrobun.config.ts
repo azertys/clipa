@@ -9,6 +9,19 @@ const notarized =
 	(Boolean(env.ELECTROBUN_APPLEAPIKEY && env.ELECTROBUN_APPLEAPIISSUER) ||
 		Boolean(env.ELECTROBUN_APPLEID && env.ELECTROBUN_APPLEIDPASS && env.ELECTROBUN_TEAMID));
 
+// Hutch builds only for the OS it runs on (docs/release.md), so each OS copies its own files.
+// The tray images are in assets/tray (assets/README.md); src/bun/tray.ts picks them by name.
+const platformCopy: Record<string, Record<string, string>> = {
+	darwin: {
+		"native/macos/.build/release/libclipanative.dylib": "native/libclipanative.dylib",
+		// Template images: macOS tints them for the menu bar.
+		"assets/tray/macos": "views/tray",
+	},
+	win32: { "assets/tray/windows": "views/tray" },
+	// AppIndicator takes a PNG file: the Windows PNGs.
+	linux: { "assets/tray/windows/png": "views/tray" },
+};
+
 export default {
 	app: {
 		name: "Clipa",
@@ -32,9 +45,7 @@ export default {
 		copy: {
 			"dist/index.html": "views/mainview/index.html",
 			"dist/assets": "views/mainview/assets",
-			"native/macos/.build/release/libclipanative.dylib": "native/libclipanative.dylib",
-			// Template images: macOS tints them for the menu bar (assets/README.md).
-			"assets/tray/macos": "views/tray",
+			...platformCopy[process.platform],
 		},
 		// Ignore Vite output in watch mode — HMR handles view rebuilds separately
 		watchIgnore: ["dist/**", "native/macos/.build/**"],
@@ -48,9 +59,12 @@ export default {
 		},
 		linux: {
 			bundleCEF: false,
+			icon: "assets/icon.iconset/icon_512x512.png",
 		},
 		win: {
 			bundleCEF: false,
+			// Hutch makes the .ico from the PNG.
+			icon: "assets/icon.iconset/icon_256x256.png",
 		},
 	},
 } satisfies ElectrobunConfig;

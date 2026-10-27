@@ -5,6 +5,7 @@ import { join } from "node:path";
 import type { Combo } from "../../core/entries";
 import type { EntryWithTags } from "../../core/types";
 import { strings } from "../mainview/strings";
+import { platform } from "../shared/platform";
 import type { IdlePrompt, Navigation, RecoveryNotice } from "../shared/rpc-schema";
 import { openDatabase } from "./db/database";
 import type { WriteContext } from "./db/repo";
@@ -49,7 +50,7 @@ function dailyBackup() {
 let tracker: NativeTracker = nullTracker;
 let system: NativeSystem = nullSystem;
 let nativeLoaded = false;
-if (process.platform === "darwin") {
+if (platform === "macos") {
 	try {
 		({ tracker, system } = loadMac(dylibPath(PATHS.RESOURCES_FOLDER)));
 		nativeLoaded = true;
@@ -154,6 +155,7 @@ function openMainWindow(navigation?: Navigation) {
 		},
 		onDataChanged: () => tray?.refresh(),
 		installUpdate: () => void installUpdate(),
+		closeWindow: () => mainWindow?.close(),
 	});
 	mainWindow = new BrowserWindow({
 		title: strings.appName,
@@ -242,32 +244,36 @@ tray.refresh();
 openMainWindow();
 Electrobun.events.on("reopen", () => openMainWindow());
 
-// Electrobun gives roles no shortcut. An accelerator is one key: ⌘ on macOS, Ctrl on Windows.
+// Electrobun gives roles no shortcut. An accelerator is one key: ⌘ on macOS.
 // ⌘Q quits (with the running-timer question); ⌘W closes the window and Clipa stays in the tray.
-ApplicationMenu.setApplicationMenu([
-	{
-		label: strings.appName,
-		submenu: [
-			{ role: "about" },
-			{ type: "separator" },
-			{ role: "hide" },
-			{ role: "hideOthers" },
-			{ role: "quit", accelerator: "q" },
-		],
-	},
-	{
-		label: "Edit",
-		submenu: [
-			{ role: "undo" },
-			{ role: "redo" },
-			{ type: "separator" },
-			{ role: "cut" },
-			{ role: "copy" },
-			{ role: "paste" },
-			{ role: "selectAll" },
-		],
-	},
-	{ label: "Window", submenu: [{ role: "minimize" }, { role: "zoom" }, { role: "close", accelerator: "w" }] },
-]);
+// On Windows the app menu is a menu bar in the window, and Linux has none: there the view
+// handles Ctrl+W, Alt+F4 and Ctrl+Q (App.svelte).
+if (platform === "macos") {
+	ApplicationMenu.setApplicationMenu([
+		{
+			label: strings.appName,
+			submenu: [
+				{ role: "about" },
+				{ type: "separator" },
+				{ role: "hide" },
+				{ role: "hideOthers" },
+				{ role: "quit", accelerator: "q" },
+			],
+		},
+		{
+			label: "Edit",
+			submenu: [
+				{ role: "undo" },
+				{ role: "redo" },
+				{ type: "separator" },
+				{ role: "cut" },
+				{ role: "copy" },
+				{ role: "paste" },
+				{ role: "selectAll" },
+			],
+		},
+		{ label: "Window", submenu: [{ role: "minimize" }, { role: "zoom" }, { role: "close", accelerator: "w" }] },
+	]);
+}
 
 console.log("[clipa] started");

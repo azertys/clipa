@@ -1,5 +1,9 @@
 // All UI strings, for the view and for the main process (tray, dialogs).
 // Keep every user-visible text here so a translation can replace this file.
+import { platform, type Platform } from "../shared/platform";
+
+/** The text for the OS Clipa runs on. */
+const byOs = (text: Record<Platform, string>) => text[platform];
 
 export const strings = {
 	appName: "Clipa",
@@ -200,7 +204,11 @@ export const strings = {
 
 	settings: {
 		title: "Settings",
-		subtitle: "All data stays on this Mac.",
+		subtitle: byOs({
+			macos: "All data stays on this Mac.",
+			windows: "All data stays on this computer.",
+			linux: "All data stays on this computer.",
+		}),
 		general: "General",
 		menuBarTimer: "Timer in menu bar",
 		menuBarTimerHint: "Show the running time next to the menu bar icon.",
@@ -225,9 +233,13 @@ export const strings = {
 		delete: (name: string) => `Delete ${name}`,
 		confirmDeleteTag: (name: string) => `Delete “${name}”? Its entries stay.`,
 		launchAtLogin: "Launch at login",
-		launchAtLoginHint: "Start Clipa when you log in to macOS.",
+		launchAtLoginHint: "Start Clipa when you log in.",
 		launchApproval: "Allow Clipa in System Settings → General → Login Items.",
-		launchUnavailable: "Not available in this build. A signed Clipa.app can start at login.",
+		launchUnavailable: byOs({
+			macos: "Not available in this build. A signed Clipa.app can start at login.",
+			windows: "Not available on Windows yet.",
+			linux: "Not available on Linux yet.",
+		}),
 		idle: "Idle detection",
 		idleHint: "When you come back, ask to keep or discard the idle time.",
 		idleAfter: "Idle after",
@@ -235,7 +247,11 @@ export const strings = {
 		appTracking: "App tracking",
 		appTrackingHint: "Clipa records the active app only while a timer runs.",
 		recordTitles: "Record window titles",
-		recordTitlesHint: "Needs Accessibility permission.",
+		recordTitlesHint: byOs({
+			macos: "Needs Accessibility permission.",
+			windows: "For example the name of a document or web page.",
+			linux: "For example the name of a document or web page.",
+		}),
 		permission: "Accessibility permission",
 		permissionGranted: "Granted",
 		permissionMissing: "Not granted. Without it Clipa records apps only, without titles.",
@@ -252,10 +268,14 @@ export const strings = {
 		days: (n: number) => `${n} days`,
 		oneYear: "1 year",
 		forever: "Forever",
-		nativeMissing: "App tracking needs the native library, which did not load.",
+		nativeMissing: byOs({
+			macos: "App tracking needs the native library, which did not load.",
+			windows: "App tracking and idle detection are not available on Windows yet.",
+			linux: "App tracking and idle detection are not available on Linux yet.",
+		}),
 		data: "Data and backup",
 		database: "Database",
-		showInFinder: "Show in Finder",
+		showFile: byOs({ macos: "Show in Finder", windows: "Show in File Explorer", linux: "Show in folder" }),
 		autoBackup: "Automatic backup",
 		autoBackupHint: (folder: string, last: string | null) =>
 			`Daily, keeps the last 14 copies in ${folder}.` + (last ? ` Last copy: ${last}.` : ""),

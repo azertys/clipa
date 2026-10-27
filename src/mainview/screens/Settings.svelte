@@ -2,6 +2,7 @@
 	import type { ImportSummary } from "../../../core/backup";
 	import { localDate } from "../../../core/time";
 	import type { Tag } from "../../../core/types";
+	import { platform } from "../../shared/platform";
 	import type { ActivityDays, BackupStatus, Settings, TrackingStatus, UpdateCheck } from "../../shared/rpc-schema";
 	import ConfirmDialog from "../components/ConfirmDialog.svelte";
 	import ImportDialog from "../components/ImportDialog.svelte";
@@ -150,7 +151,7 @@
 
 	async function setRecordTitles(on: boolean) {
 		await set({ recordTitles: on });
-		if (on && status && !status.titlePermission) {
+		if (on && platform === "macos" && status && !status.titlePermission) {
 			await app.attempt(() => api.trackingRequestPermission({}));
 			await refreshStatus();
 		}
@@ -220,15 +221,18 @@
 				/>
 			{/snippet}
 		</SettingsRow>
-		<SettingsRow label={strings.settings.menuBarTimer} description={strings.settings.menuBarTimerHint}>
-			{#snippet control()}
-				<Toggle
-					label={strings.settings.menuBarTimer}
-					checked={app.settings.showTrayTimer}
-					onchange={(v) => set({ showTrayTimer: v })}
-				/>
-			{/snippet}
-		</SettingsRow>
+		<!-- Only the macOS menu bar shows text next to the icon. Windows has the time in the tooltip. -->
+		{#if platform === "macos"}
+			<SettingsRow label={strings.settings.menuBarTimer} description={strings.settings.menuBarTimerHint}>
+				{#snippet control()}
+					<Toggle
+						label={strings.settings.menuBarTimer}
+						checked={app.settings.showTrayTimer}
+						onchange={(v) => set({ showTrayTimer: v })}
+					/>
+				{/snippet}
+			</SettingsRow>
+		{/if}
 		<SettingsRow label={strings.settings.weekStart} for="week-start">
 			{#snippet control()}
 				<select
@@ -312,18 +316,21 @@
 			{/snippet}
 		</SettingsRow>
 		{#if app.settings.recordTitles && status}
-			<SettingsRow
-				label={strings.settings.permission}
-				description={status.titlePermission ? strings.settings.permissionGranted : strings.settings.permissionMissing}
-			>
-				{#snippet control()}
-					{#if status?.titlePermission}
-						<span class="granted">{strings.settings.permissionGranted}</span>
-					{:else}
-						<Button size="sm" onclick={() => api.trackingOpenSettings({})}>{strings.settings.openSystemSettings}</Button>
-					{/if}
-				{/snippet}
-			</SettingsRow>
+			<!-- Only macOS asks for a permission to read window titles. -->
+			{#if platform === "macos"}
+				<SettingsRow
+					label={strings.settings.permission}
+					description={status.titlePermission ? strings.settings.permissionGranted : strings.settings.permissionMissing}
+				>
+					{#snippet control()}
+						{#if status?.titlePermission}
+							<span class="granted">{strings.settings.permissionGranted}</span>
+						{:else}
+							<Button size="sm" onclick={() => api.trackingOpenSettings({})}>{strings.settings.openSystemSettings}</Button>
+						{/if}
+					{/snippet}
+				</SettingsRow>
+			{/if}
 			<SettingsRow label={strings.settings.noTitleApps} description={strings.settings.noTitleAppsHint} stacked>
 				{#snippet control()}
 					<AppListInput
@@ -435,7 +442,7 @@
 	<Card title={strings.settings.data}>
 		<SettingsRow label={strings.settings.database} description={dbPath}>
 			{#snippet control()}
-				<Button size="sm" onclick={() => api.revealDatabase({})}>{strings.settings.showInFinder}</Button>
+				<Button size="sm" onclick={() => api.revealDatabase({})}>{strings.settings.showFile}</Button>
 			{/snippet}
 		</SettingsRow>
 		<SettingsRow label={strings.settings.autoBackup} description={backupHint}>

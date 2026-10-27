@@ -3,11 +3,12 @@
 	import { atLocalMinutes, formatElapsed, localDate, parseClock } from "../../../core/time";
 	import type { EntryWithTags } from "../../../core/types";
 	import { app, clock, tagColor, tz } from "../lib/app.svelte";
+	import { shortcut } from "../lib/keys";
 	import { strings } from "../strings";
 	import Button from "./Button.svelte";
 	import TagInput from "./TagInput.svelte";
 
-	// ⌘↵ starts and stops the timer; App.svelte listens for it on the window.
+	// ⌘↵ (Ctrl+↵) starts and stops the timer; App.svelte listens for it on the window.
 	let {
 		running,
 		now,
@@ -92,9 +93,9 @@
 		<div class="actions">
 			{#if running}
 				<Button size="lg" variant="secondary" onclick={ondiscard}>{strings.timer.discard}</Button>
-				<Button size="lg" variant="stop" icon="stop" kbd="⌘↵" onclick={onstop}>{strings.timer.stop}</Button>
+				<Button size="lg" variant="stop" icon="stop" kbd={shortcut("↵")} onclick={onstop}>{strings.timer.stop}</Button>
 			{:else}
-				<Button size="lg" variant="primary" icon="play" kbd="⌘↵" onclick={onstart}>{strings.timer.start}</Button>
+				<Button size="lg" variant="primary" icon="play" kbd={shortcut("↵")} onclick={onstart}>{strings.timer.start}</Button>
 			{/if}
 		</div>
 	</div>

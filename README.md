@@ -1,7 +1,8 @@
 # Clipa
 
-A local-first desktop time tracker for one user. macOS first. Built with Electrobun 2 (Bun main
-process, system WKWebView), Svelte 5 and SQLite.
+A local-first desktop time tracker for one user. macOS first; Windows and Linux builds run without
+app tracking (docs/decisions.md, D52). Built with Electrobun 2 (Bun main process, system webview),
+Svelte 5 and SQLite.
 
 ## Requirements
 
@@ -9,6 +10,7 @@ process, system WKWebView), Svelte 5 and SQLite.
 - Hutch (Electrobun's CLI). `npx electrobun init` installs it to `~/.hutch`, or see
   <https://hutch.blackboard.sh>.
 - Swift (the Xcode Command Line Tools are enough) for `native/macos`
+- Windows and Linux builds come from CI, one runner per OS (`docs/release.md`, section 5)
 
 ## Commands
 

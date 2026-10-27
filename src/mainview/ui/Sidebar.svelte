@@ -2,6 +2,7 @@
 	import type { Snippet } from "svelte";
 	import lockup from "../../../assets/logo/clipa-lockup-white.svg";
 	import type { Screen } from "../../shared/rpc-schema";
+	import { shortcut } from "../lib/keys";
 	import { strings } from "../strings";
 	import Icon from "./Icon.svelte";
 	import type { IconName } from "./icons";
@@ -9,11 +10,11 @@
 	type NavItem = { id: Screen; shortcut: string; icon: IconName };
 
 	const items: NavItem[] = [
-		{ id: "today", shortcut: "⌘1", icon: "today" },
-		{ id: "entries", shortcut: "⌘2", icon: "entries" },
-		{ id: "calendar", shortcut: "⌘3", icon: "calendar" },
-		{ id: "reports", shortcut: "⌘4", icon: "reports" },
-		{ id: "settings", shortcut: "⌘5", icon: "settings" },
+		{ id: "today", shortcut: shortcut("1"), icon: "today" },
+		{ id: "entries", shortcut: shortcut("2"), icon: "entries" },
+		{ id: "calendar", shortcut: shortcut("3"), icon: "calendar" },
+		{ id: "reports", shortcut: shortcut("4"), icon: "reports" },
+		{ id: "settings", shortcut: shortcut("5"), icon: "settings" },
 	];
 
 	let {

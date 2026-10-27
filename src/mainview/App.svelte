@@ -4,10 +4,12 @@
 	import { trackedIntervals } from "../../core/reports";
 	import { addLocalDays, startOfLocalDay, startOfLocalWeek } from "../../core/time";
 	import type { EntryWithTags } from "../../core/types";
+	import { platform } from "../shared/platform";
 	import type { Screen } from "../shared/rpc-schema";
 	import IdleDialog from "./components/IdleDialog.svelte";
 	import RecoveryDialog from "./components/RecoveryDialog.svelte";
 	import { app, tz } from "./lib/app.svelte";
+	import { primaryKey } from "./lib/keys";
 	import { api, send } from "./lib/rpc";
 	import Calendar from "./screens/Calendar.svelte";
 	import Entries from "./screens/Entries.svelte";
@@ -45,17 +47,22 @@
 		if (start.idle) app.idle = start.idle;
 	});
 
-	const windows = navigator.userAgent.includes("Windows");
-
 	function onkeydown(e: KeyboardEvent) {
 		// The close button keeps Clipa in the tray; Alt+F4 quits, as ⌘Q does on macOS.
-		if (windows && e.altKey && e.key === "F4") {
+		if (platform === "windows" && e.altKey && e.key === "F4") {
 			e.preventDefault();
 			send.appQuit({});
 			return;
 		}
-		if (!e.metaKey || e.altKey || e.ctrlKey || e.defaultPrevented) return;
-		if (e.key === "Enter") {
+		if (!primaryKey(e) || e.altKey || e.defaultPrevented) return;
+		// On macOS the app menu has ⌘Q and ⌘W. Windows and Linux get no app menu (index.ts).
+		if (platform !== "macos" && e.key.toLowerCase() === "w") {
+			e.preventDefault();
+			send.windowClose({});
+		} else if (platform === "linux" && e.key.toLowerCase() === "q") {
+			e.preventDefault();
+			send.appQuit({});
+		} else if (e.key === "Enter") {
 			e.preventDefault();
 			void app.toggleTimer();
 		} else if (e.key === "n") {
@@ -68,10 +75,11 @@
 	}
 
 	// The webview's own menu has Inspect Element. Text fields get Cut / Copy / Paste from the main process.
+	// Electrobun has no context menus on Linux, so there text fields get no menu.
 	function oncontextmenu(e: MouseEvent) {
 		e.preventDefault();
 		const field = (e.target as Element).closest("input, textarea, [contenteditable]");
-		if (field) send.editMenuShow({});
+		if (field && platform !== "linux") send.editMenuShow({});
 	}
 </script>
 

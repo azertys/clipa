@@ -1,0 +1,67 @@
+# Builds Clipa for Windows and Linux. Hutch builds only for the OS it runs on, so each OS has its
+# own runner (docs/release.md). The macOS build comes from a Mac (`hutch run build`): a macOS
+# runner uses the free minutes 10 times as fast. Start it from the Actions tab, or push a tag such
+# as v0.2.0. Each run keeps the files of artifacts/ as one download per OS, for 7 days.
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025
+            platform: windows-x64
+          - os: ubuntu-24.04
+            platform: linux-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # The Hutch releases and toolchains that hutch.config.ts pins.
+      - uses: actions/cache@v5
+        with:
+          path: ~/.hutch
+          key: hutch-${{ matrix.platform }}-${{ hashFiles('hutch.config.ts', 'hutch.lock') }}
+
+      - name: Install Hutch
+        if: runner.os != 'Windows'
+        run: |
+          curl --proto '=https' --tlsv1.2 -fsSL https://hutch.blackboard.sh/hutch/install.sh -o "$RUNNER_TEMP/install-hutch.sh"
+          sh "$RUNNER_TEMP/install-hutch.sh" --no-modify-path
+          echo "$HOME/.hutch/bin" >> "$GITHUB_PATH"
+
+      - name: Install Hutch
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP "install-hutch.ps1"
+          Invoke-WebRequest -UseBasicParsing -Uri "https://hutch.blackboard.sh/hutch/install.ps1" -OutFile $installer
+          & $installer
+          if ($LASTEXITCODE -ne 0) { throw "Hutch installation failed" }
+          Join-Path $HOME ".hutch\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - run: hutch run install
+      - run: hutch run check
+      - run: hutch run test
+      # Unsigned: the signing variables of docs/release.md are not set here.
+      - run: hutch run build
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: clipa-${{ matrix.platform }}
+          path: artifacts/
+          if-no-files-found: error
+          # The free plan stores 500 MB; one run uploads about 100 MB.
+          retention-days: 7

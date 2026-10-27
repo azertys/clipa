@@ -130,7 +130,7 @@ export type ClipaRPC = {
 
 			settingsGet: { params: {}; response: Settings };
 			settingsSet: { params: Partial<Settings>; response: Settings };
-			/** Shows the database file in Finder. */
+			/** Shows the database file in the file manager. */
 			revealDatabase: { params: {}; response: true };
 
 			eventsInstances: { params: { from: number; to: number }; response: Instance[] };
@@ -153,12 +153,12 @@ export type ClipaRPC = {
 			timerApps: { params: {}; response: AppUsage[] };
 
 			reportsGet: { params: ReportQuery; response: Report };
-			/** Writes report tables as CSV files to Downloads and shows them in Finder (D31). */
+			/** Writes report tables as CSV files to Downloads and shows them in the file manager (D31). */
 			reportsExportCsv: { params: ReportQuery & { tables: ReportTable[] }; response: { paths: string[] } };
 
-			/** Writes the JSON backup (spec section 9) to Downloads and shows it in Finder. */
+			/** Writes the JSON backup (spec section 9) to Downloads and shows it in the file manager. */
 			backupExport: { params: { tzid: string }; response: { path: string } };
-			/** Writes entries as CSV to Downloads and shows the file in Finder. */
+			/** Writes entries as CSV to Downloads and shows the file in the file manager. */
 			entriesExportCsv: { params: EntriesExport; response: { path: string } };
 			/** Copies the database, then merges a JSON backup's text into it. */
 			backupImport: { params: { json: string }; response: ImportSummary };
@@ -171,8 +171,10 @@ export type ClipaRPC = {
 			updateInstall: { params: {}; response: true };
 		};
 		messages: {
-			/** Alt+F4 on Windows. Quits as the tray's Quit does. */
+			/** Alt+F4 on Windows, Ctrl+Q on Linux. Quits as the tray's Quit does. */
 			appQuit: {};
+			/** Ctrl+W on Windows and Linux. Closes the window; Clipa stays in the tray. */
+			windowClose: {};
 			/** A right click in a text field: Cut / Copy / Paste at the pointer. */
 			editMenuShow: {};
 		};

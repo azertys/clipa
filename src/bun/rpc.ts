@@ -61,6 +61,8 @@ export type AppContext = {
 	onDataChanged(): void;
 	/** Downloads the update in the background and restarts into it. */
 	installUpdate(): void;
+	/** Closes the main window. Clipa stays in the tray. */
+	closeWindow(): void;
 };
 
 export function createRpc(app: AppContext) {
@@ -272,6 +274,7 @@ export function createRpc(app: AppContext) {
 			},
 			messages: {
 				appQuit: () => Utils.quit(),
+				windowClose: () => app.closeWindow(),
 				editMenuShow: () => ContextMenu.showContextMenu(EDIT_MENU),
 			},
 		},

@@ -1,14 +1,15 @@
 <script lang="ts">
+	import { primaryKey, shortcut } from "../lib/keys";
 	import { strings } from "../strings";
 	import Icon from "./Icon.svelte";
 
-	// ⌘F puts the focus here. Esc clears the field.
+	// ⌘F (Ctrl+F) puts the focus here. Esc clears the field.
 	let { value = $bindable(""), placeholder = strings.entries.search }: { value?: string; placeholder?: string } = $props();
 
 	let input: HTMLInputElement;
 
 	function onwindowkey(e: KeyboardEvent) {
-		if (e.metaKey && !e.altKey && !e.ctrlKey && e.key.toLowerCase() === "f") {
+		if (primaryKey(e) && !e.altKey && e.key.toLowerCase() === "f") {
 			e.preventDefault();
 			input.focus();
 			input.select();
@@ -30,7 +31,7 @@
 			if (e.key === "Escape") value = "";
 		}}
 	/>
-	<span class="kbd">⌘F</span>
+	<span class="kbd">{shortcut("F")}</span>
 </label>
 
 <style>

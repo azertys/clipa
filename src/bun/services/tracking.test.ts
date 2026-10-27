@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { formatClock } from "../../../core/time";
 import type { IdlePrompt } from "../../shared/rpc-schema";
 import { getEntry, listEntries } from "../db/entries";
 import { readSettings, writeSettings } from "../db/settings";
@@ -187,6 +188,24 @@ describe("idle (M4 acceptance)", () => {
 		s.state.idleSeconds = 2;
 		s.tracking.idle.poll();
 		expect(s.prompts).toEqual([{ id: expect.any(String), entryId: entry.id, start: idleStart, end: s.ctx.now() - 2 * SEC }]);
+		s.timer.stop();
+	});
+
+	test("idle time in fractions of a second gives whole milliseconds, which the dialog can show", () => {
+		const s = setup();
+		s.timer.start({ note: "", tagIds: [] });
+		s.advance(10 * MIN);
+		// The native call returns fractions of a second.
+		s.state.idleSeconds = 6 * 60 + 0.12345;
+		s.tracking.idle.poll();
+		s.advance(MIN);
+		s.state.idleSeconds = 1.98765;
+		s.tracking.idle.poll();
+		const [prompt] = s.prompts;
+		expect(() => formatClock(prompt.start, "Europe/Bucharest")).not.toThrow();
+		expect(() => formatClock(prompt.end, "Europe/Bucharest")).not.toThrow();
+		const row = s.db.query("SELECT typeof(started_at) AS s, typeof(ended_at) AS e FROM idle_periods").get();
+		expect(row).toEqual({ s: "integer", e: "integer" });
 		s.timer.stop();
 	});
 

@@ -61,7 +61,7 @@ export type AppContext = {
 	onDataChanged(): void;
 	/** Downloads the update in the background and restarts into it. */
 	installUpdate(): void;
-	/** Closes the main window. Clipa stays in the tray. */
+	/** Closes this window. Clipa stays in the tray. */
 	closeWindow(): void;
 };
 
@@ -155,6 +155,7 @@ export function createRpc(app: AppContext) {
 					return true as const;
 				},
 
+				idleQuestion: () => tracking.idle.question(),
 				idleResolve: ({ id, action }) => {
 					tracking.resolve(id, action);
 					return changed(true as const);

@@ -26,7 +26,6 @@ export const rpc = Electroview.defineRPC<ClipaRPC>({
 			timerChanged: (p) => emit("timerChanged", p),
 			dataChanged: (p) => emit("dataChanged", p),
 			navigate: (p) => emit("navigate", p),
-			idleDetected: (p) => emit("idleDetected", p),
 			updateFailed: (p) => emit("updateFailed", p),
 		},
 	},

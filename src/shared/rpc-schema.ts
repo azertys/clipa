@@ -99,7 +99,7 @@ export type UpdateCheck =
 	| { state: "available"; version: string; latest: string }
 	| { state: "error"; version: string; message: string };
 
-export type UiStart = { navigation: Navigation | null; recovery: RecoveryNotice | null; idle: IdlePrompt | null };
+export type UiStart = { navigation: Navigation | null; recovery: RecoveryNotice | null };
 
 export type ClipaRPC = {
 	// Handled in the main process, called by the webview.
@@ -140,6 +140,8 @@ export type ClipaRPC = {
 			eventsEditOccurrence: { params: OccurrenceRef & { changes: Partial<EventFields> }; response: true };
 			eventsDeleteOccurrence: { params: OccurrenceRef; response: true };
 
+			/** The idle question waiting for an answer, for the idle window (D54). */
+			idleQuestion: { params: {}; response: IdlePrompt | null };
 			idleResolve: { params: { id: string; action: IdleAction }; response: true };
 			trackingStatus: { params: {}; response: TrackingStatus };
 			/** Shows the macOS Accessibility prompt. Returns whether permission is granted now. */
@@ -173,7 +175,7 @@ export type ClipaRPC = {
 		messages: {
 			/** Alt+F4 on Windows, Ctrl+Q on Linux. Quits as the tray's Quit does. */
 			appQuit: {};
-			/** Ctrl+W on Windows and Linux. Closes the window; Clipa stays in the tray. */
+			/** Ctrl+W on Windows and Linux, and the idle window after an answer. Closes the window. */
 			windowClose: {};
 			/** A right click in a text field: Cut / Copy / Paste at the pointer. */
 			editMenuShow: {};
@@ -188,8 +190,6 @@ export type ClipaRPC = {
 			/** Data changed outside the view (tray, recovery). The view reloads what it shows. */
 			dataChanged: {};
 			navigate: Navigation;
-			/** An idle period ended (spec: idleDetected). */
-			idleDetected: IdlePrompt;
 			/** The update download or restart failed. */
 			updateFailed: { message: string };
 		};

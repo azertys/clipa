@@ -55,7 +55,8 @@ export class IdleMonitor {
 		const entry = this.opts.running();
 		if (!entry) return;
 		const now = this.opts.now();
-		const idleMs = Math.max(0, this.opts.tracker.idleSeconds() * 1000);
+		// Whole milliseconds: the native call returns fractions of a second, and times are integers.
+		const idleMs = Math.max(0, Math.round(this.opts.tracker.idleSeconds() * 1000));
 		if (this.open) {
 			if (idleMs < RESUME_MS) this.finish(this.open, now - idleMs);
 			return;

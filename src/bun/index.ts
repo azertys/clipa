@@ -6,13 +6,13 @@ import type { Combo } from "../../core/entries";
 import type { EntryWithTags } from "../../core/types";
 import { strings } from "../mainview/strings";
 import { platform } from "../shared/platform";
-import type { IdlePrompt, Navigation, RecoveryNotice } from "../shared/rpc-schema";
+import type { Navigation, RecoveryNotice } from "../shared/rpc-schema";
 import { openDatabase } from "./db/database";
 import type { WriteContext } from "./db/repo";
 import { deviceId, readSettings } from "./db/settings";
 import { dylibPath, loadMac } from "./native/macos";
 import { nullSystem, nullTracker, type NativeSystem, type NativeTracker } from "./native/tracker";
-import { createRpc, type ClipaBunRpc } from "./rpc";
+import { createRpc, type AppContext, type ClipaBunRpc } from "./rpc";
 import { Backups, DAILY_CHECK_MS } from "./services/backups";
 import { SHORT_ENTRY_MS, TimerService } from "./services/timer";
 import { Tracking } from "./services/tracking";
@@ -99,11 +99,8 @@ const tracking = new Tracking({
 	timer,
 	settings: () => readSettings(db),
 	excludedName: strings.tracking.excluded,
-	onPrompt: (prompt: IdlePrompt) => {
-		// The question is in the window (a native dialog would block this process, D11).
-		if (mainWindow) send("idleDetected", prompt);
-		else openMainWindow();
-	},
+	// The question is in a window of its own (a native dialog would block this process, D11).
+	onPrompt: () => openIdleWindow(),
 });
 
 function startFromTray() {
@@ -125,16 +122,9 @@ async function mainViewUrl(): Promise<string> {
 
 const url = await mainViewUrl();
 
-function openMainWindow(navigation?: Navigation) {
-	if (mainWindow) {
-		mainWindow.show();
-		mainWindow.activate();
-		if (navigation) send("navigate", navigation);
-		return;
-	}
-	// The view asks for this with uiReady() once it has mounted.
-	if (navigation) pendingNavigation = navigation;
-	rpc = createRpc({
+/** What a window's RPC handlers use. */
+function windowContext(window: Pick<AppContext, "onDataChanged" | "closeWindow">): AppContext {
+	return {
 		db,
 		ctx,
 		timer,
@@ -144,7 +134,7 @@ function openMainWindow(navigation?: Navigation) {
 		backups,
 		info: { version: "0.1.0", deviceId: ctx.deviceId, dbPath, nativeLoaded },
 		takeUiStart: () => {
-			const start = { navigation: pendingNavigation, recovery: pendingRecovery, idle: tracking.idle.question() };
+			const start = { navigation: pendingNavigation, recovery: pendingRecovery };
 			console.log(`[clipa] view ready, recovery notice: ${start.recovery ? "yes" : "no"}`);
 			pendingNavigation = null;
 			pendingRecovery = null;
@@ -153,10 +143,21 @@ function openMainWindow(navigation?: Navigation) {
 		setDraft: (next) => {
 			draft = next;
 		},
-		onDataChanged: () => tray?.refresh(),
 		installUpdate: () => void installUpdate(),
-		closeWindow: () => mainWindow?.close(),
-	});
+		...window,
+	};
+}
+
+function openMainWindow(navigation?: Navigation) {
+	if (mainWindow) {
+		mainWindow.show();
+		mainWindow.activate();
+		if (navigation) send("navigate", navigation);
+		return;
+	}
+	// The view asks for this with uiReady() once it has mounted.
+	if (navigation) pendingNavigation = navigation;
+	rpc = createRpc(windowContext({ onDataChanged: () => tray?.refresh(), closeWindow: () => mainWindow?.close() }));
 	mainWindow = new BrowserWindow({
 		title: strings.appName,
 		url,
@@ -166,6 +167,47 @@ function openMainWindow(navigation?: Navigation) {
 	mainWindow.on("close", () => {
 		mainWindow = null;
 		rpc = null;
+	});
+}
+
+// --- Idle window -----------------------------------------------------------
+let idleWindow: BrowserWindow | null = null;
+
+/**
+ * The idle question in a small window of its own, on top of other apps and on every desktop,
+ * with the focus (D54). The view loads in idle mode (#idle) and asks for the question.
+ */
+function openIdleWindow() {
+	if (idleWindow) {
+		idleWindow.show();
+		idleWindow.activate();
+		return;
+	}
+	const idleRpc = createRpc(
+		windowContext({
+			// The main window shows the result of the answer.
+			onDataChanged: () => {
+				tray?.refresh();
+				send("dataChanged", {});
+			},
+			closeWindow: () => idleWindow?.close(),
+		}),
+	);
+	idleWindow = new BrowserWindow({
+		title: strings.appName,
+		url: `${url}#idle`,
+		rpc: idleRpc,
+		frame: { width: 440, height: 150 },
+		styleMask: { Miniaturizable: false, Resizable: false },
+	});
+	idleWindow.setAlwaysOnTop(true);
+	idleWindow.setVisibleOnAllWorkspaces(true);
+	idleWindow.activate();
+	idleWindow.on("close", () => {
+		idleWindow = null;
+		// Closed without an answer: the time is kept, as with Esc.
+		const question = tracking.idle.question();
+		if (question) tracking.resolve(question.id, "keep");
 	});
 }
 

@@ -233,11 +233,13 @@ Electrobun.events.on("before-quit", (event) => {
 });
 
 async function confirmQuit() {
+	// From the tray Clipa is not the active app, and the question would open behind other windows.
+	system.activate();
 	const { response } = await Utils.showMessageBox({
 		type: "question",
+		// macOS shows the title in bold and the message under it; it does not show `detail`.
 		title: strings.dialogs.quitTitle,
-		message: strings.dialogs.quitTitle,
-		detail: strings.dialogs.quitMessage,
+		message: strings.dialogs.quitMessage,
 		buttons: [strings.dialogs.quitStop, strings.dialogs.quitKeep, strings.dialogs.cancel],
 		defaultId: 0,
 		cancelId: 2,

@@ -12,6 +12,7 @@ const symbols = {
 	tn_ax_trusted: { args: [FFIType.i32], returns: FFIType.i32 },
 	tn_launch_at_login_get: { args: [], returns: FFIType.i32 },
 	tn_launch_at_login_set: { args: [FFIType.i32], returns: FFIType.i32 },
+	tn_activate_app: { args: [], returns: FFIType.void },
 	tn_free: { args: [FFIType.ptr], returns: FFIType.void },
 } as const;
 
@@ -56,6 +57,7 @@ export function loadMac(path: string): { tracker: NativeTracker; system: NativeS
 	const system: NativeSystem = {
 		launchAtLogin: () => LAUNCH_STATES[lib.tn_launch_at_login_get()] ?? "unavailable",
 		setLaunchAtLogin: (on) => LAUNCH_STATES[lib.tn_launch_at_login_set(on ? 1 : 0)] ?? "unavailable",
+		activate: () => lib.tn_activate_app(),
 	};
 	return { tracker, system };
 }

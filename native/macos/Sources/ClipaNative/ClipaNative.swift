@@ -83,6 +83,35 @@ public func tn_launch_at_login_set(_ enabled: Int32) -> Int32 {
     return tn_launch_at_login_get()
 }
 
+/// Brings Clipa to the front, so that a dialog shown next is on top of other apps' windows.
+/// macOS 14 and later can refuse that while the user works in another app, so the next modal
+/// dialog is also put on the modal panel level, above the normal windows of every app.
+/// AppKit works on the main thread; Bun calls from its own thread.
+@_cdecl("tn_activate_app")
+public func tn_activate_app() {
+    let activate = { NSApplication.shared.activate() }
+    if Thread.isMainThread { activate() } else { DispatchQueue.main.sync(execute: activate) }
+    raiseNextModalWindow()
+}
+
+/// The dialog opens after tn_activate_app returns: look for it every 50 ms, for 2 s at most.
+/// A run loop timer: Electrobun runs the dialog inside a main queue block, so the main queue
+/// runs nothing else until it closes, but the run loop's common modes still fire timers.
+private func raiseNextModalWindow() {
+    var tries = 40
+    let timer = Timer(timeInterval: 0.05, repeats: true) { timer in
+        tries -= 1
+        if let window = NSApplication.shared.modalWindow {
+            window.level = .modalPanel
+            window.orderFrontRegardless()
+            timer.invalidate()
+        } else if tries <= 0 {
+            timer.invalidate()
+        }
+    }
+    RunLoop.main.add(timer, forMode: .common)
+}
+
 @_cdecl("tn_free")
 public func tn_free(_ pointer: UnsafeMutablePointer<CChar>?) {
     free(pointer)

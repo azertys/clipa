@@ -15,6 +15,8 @@ export interface NativeTracker {
 export interface NativeSystem {
 	launchAtLogin(): LaunchAtLogin;
 	setLaunchAtLogin(on: boolean): LaunchAtLogin;
+	/** Brings Clipa to the front, so that a native dialog shown next is on top. */
+	activate(): void;
 }
 
 /** Used when no native library is available (other platforms, failed load). */
@@ -29,4 +31,5 @@ export const nullTracker: NativeTracker = {
 export const nullSystem: NativeSystem = {
 	launchAtLogin: () => "unavailable",
 	setLaunchAtLogin: () => "unavailable",
+	activate: () => {},
 };

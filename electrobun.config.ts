@@ -26,7 +26,7 @@ export default {
 	app: {
 		name: "Clipa",
 		identifier: "dev.clipa.app",
-		version: "0.1.0",
+		version: "0.1.1",
 	},
 	runtime: {
 		// Clipa lives in the tray. Closing the main window does not quit the app.

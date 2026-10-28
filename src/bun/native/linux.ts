@@ -3,7 +3,7 @@
 // Launch at login is a desktop entry in the autostart folder.
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, posix } from "node:path";
 import { applicationDirs, DesktopEntries } from "./desktop-entries";
 import { openSessionBus } from "./gio";
 import type { LaunchAtLogin, NativeSystem, NativeTracker, OwnApp } from "./tracker";
@@ -108,7 +108,7 @@ export function loadLinux({ own, launcher, icon, loginName }: LinuxOptions): {
 
 /** ~/.config/autostart/<name>.desktop (XDG Autostart spec). */
 export function autostartFile(env: Record<string, string | undefined>, name: string, home = homedir()): string {
-	return join(env.XDG_CONFIG_HOME || join(home, ".config"), "autostart", `${name}.desktop`);
+	return posix.join(env.XDG_CONFIG_HOME || posix.join(home, ".config"), "autostart", `${name}.desktop`);
 }
 
 /**

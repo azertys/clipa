@@ -2,7 +2,7 @@
 // window has a class ("Code"), its app's entry has the name ("Visual Studio Code").
 import { readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { posix } from "node:path";
 
 export type DesktopApp = { id: string; name: string };
 
@@ -11,9 +11,9 @@ const RESCAN_MS = 60_000;
 
 /** The applications folders, first ones first (XDG Base Directory spec), and Snap's folder. */
 export function applicationDirs(env: Record<string, string | undefined>, home = homedir()): string[] {
-	const dataHome = env.XDG_DATA_HOME || join(home, ".local", "share");
+	const dataHome = env.XDG_DATA_HOME || posix.join(home, ".local", "share");
 	const dataDirs = (env.XDG_DATA_DIRS || "/usr/local/share:/usr/share").split(":").filter(Boolean);
-	const dirs = [dataHome, ...dataDirs].map((dir) => join(dir, "applications"));
+	const dirs = [dataHome, ...dataDirs].map((dir) => posix.join(dir, "applications"));
 	return [...new Set([...dirs, "/var/lib/snapd/desktop/applications"])];
 }
 
@@ -88,7 +88,7 @@ export class DesktopEntries {
 				if (this.byId.has(id.toLowerCase())) continue;
 				let entry: ReturnType<typeof parseDesktopEntry>;
 				try {
-					entry = parseDesktopEntry(readFileSync(join(dir, file), "utf8"));
+					entry = parseDesktopEntry(readFileSync(posix.join(dir, file), "utf8"));
 				} catch {
 					continue;
 				}

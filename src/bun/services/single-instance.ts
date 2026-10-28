@@ -4,12 +4,12 @@
 import { createHash } from "node:crypto";
 import { rmSync } from "node:fs";
 import { createConnection, createServer, type Server } from "node:net";
-import { join } from "node:path";
+import { posix } from "node:path";
 import type { Platform } from "../../shared/platform";
 
 /** A named pipe on Windows (one name per data folder), a socket file in the data folder elsewhere. */
 export function instanceAddress(platform: Platform, userData: string): string {
-	if (platform !== "windows") return join(userData, "clipa.sock");
+	if (platform !== "windows") return posix.join(userData, "clipa.sock");
 	const id = createHash("sha256").update(userData.toLowerCase()).digest("hex").slice(0, 16);
 	return `\\\\.\\pipe\\clipa-${id}`;
 }

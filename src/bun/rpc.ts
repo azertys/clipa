@@ -164,6 +164,9 @@ export function createRpc(app: AppContext) {
 					nativeLoaded: app.info.nativeLoaded,
 					titlePermission: tracker.hasTitlePermission(),
 					launchAtLogin: system.launchAtLogin(),
+					// Settings is open, so Clipa is the active app when it can be read.
+					seesApps: tracker.frontmostApp() !== null,
+					measuresIdle: tracker.measuresIdle(),
 				}),
 				trackingRequestPermission: () => {
 					tracker.requestTitlePermission();

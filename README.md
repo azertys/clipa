@@ -1,8 +1,7 @@
 # Clipa
 
-A local-first desktop time tracker for one user. macOS first; Windows and Linux builds run without
-app tracking (docs/decisions.md, D52). Built with Electrobun 2 (Bun main process, system webview),
-Svelte 5 and SQLite.
+A local-first desktop time tracker for one user, for macOS, Windows and Linux (docs/decisions.md,
+D52 and D58). Built with Electrobun 2 (Bun main process, system webview), Svelte 5 and SQLite.
 
 ## Requirements
 
@@ -33,7 +32,7 @@ The dev build keeps its database at
 
 ```
 core/            pure TypeScript domain logic and its tests (no Electrobun, Svelte or SQLite)
-src/bun/         main process: database, timer, tray, native calls, RPC handlers
+src/bun/         main process: database, timer, tray, native calls (src/bun/native), RPC handlers
 src/mainview/    Svelte 5 view; all UI strings are in strings.ts
 src/mainview/ui/ design tokens and components (from clipa-ui-svelte)
 src/shared/      the typed RPC contract

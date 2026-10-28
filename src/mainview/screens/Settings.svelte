@@ -274,7 +274,10 @@
 				</div>
 			{/snippet}
 		</SettingsRow>
-		<SettingsRow label={strings.settings.idle} description={strings.settings.idleHint}>
+		<SettingsRow
+			label={strings.settings.idle}
+			description={status && !status.measuresIdle ? strings.settings.idleUnavailable : strings.settings.idleHint}
+		>
 			{#snippet control()}
 				<label for="idle-minutes" class="clipa-sr-only">{strings.settings.idleAfter}</label>
 				<select
@@ -305,7 +308,11 @@
 
 	<Card title={strings.settings.appTracking}>
 		<p class="help">{strings.settings.appTrackingHint}</p>
-		{#if status && !status.nativeLoaded}<p class="help">{strings.settings.nativeMissing}</p>{/if}
+		{#if status && !status.nativeLoaded}
+			<p class="help">{strings.settings.nativeMissing}</p>
+		{:else if status && !status.seesApps}
+			<p class="help">{strings.settings.appsHidden}</p>
+		{/if}
 		<SettingsRow label={strings.settings.recordTitles} description={strings.settings.recordTitlesHint}>
 			{#snippet control()}
 				<Toggle

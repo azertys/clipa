@@ -86,6 +86,27 @@ describe("Segmenter", () => {
 		expect(seg.current()).toMatchObject({ start: MIN + SEC });
 	});
 
+	test("a sample without an app closes the open segment", () => {
+		const seg = segmenter();
+		for (let t = 0; t <= 5; t++) seg.sample(sample(t * SEC, "code"));
+		expect(seg.none(6 * SEC)).toEqual({
+			writes: [expect.objectContaining({ id: "s1", start: 0, end: 6 * SEC })],
+			gap: null,
+		});
+		expect(seg.current()).toBeNull();
+		expect(seg.none(7 * SEC).writes).toEqual([]);
+		expect(seg.sample(sample(8 * SEC, "code")).writes).toEqual([]);
+		expect(seg.current()).toMatchObject({ id: "s2", start: 8 * SEC });
+	});
+
+	test("samples without an app still show a sleep", () => {
+		const seg = segmenter();
+		seg.none(0);
+		seg.none(SEC);
+		expect(seg.none(10 * MIN).gap).toEqual({ start: SEC, end: 10 * MIN });
+		expect(seg.sample(sample(10 * MIN + SEC, "code")).gap).toBeNull();
+	});
+
 	test("stop closes the open segment", () => {
 		const seg = segmenter();
 		seg.sample(sample(0, "code"));

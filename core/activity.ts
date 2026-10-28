@@ -29,20 +29,23 @@ export class Segmenter {
 
 	/** Adds a sample. `gap` is set when the time since the last sample shows that the system slept. */
 	sample(s: Sample): { writes: Segment[]; gap: Interval | null } {
-		const writes: Segment[] = [];
-		let gap: Interval | null = null;
-		if (this.lastSampleAt !== null && s.at - this.lastSampleAt > SLEEP_GAP_MS) {
-			gap = { start: this.lastSampleAt, end: s.at };
-			writes.push(...this.closeOpen(this.lastSampleAt));
-			this.last = null;
-		}
-		this.lastSampleAt = s.at;
+		const { writes, gap } = this.wake(s.at);
 		if (this.open && this.open.appKey === s.appKey && this.open.title === s.title) {
 			this.open.end = s.at;
 			return { writes, gap };
 		}
 		writes.push(...this.closeOpen(s.at));
 		this.open = { id: this.newId(), appKey: s.appKey, appName: s.appName, title: s.title, start: s.at, end: s.at };
+		return { writes, gap };
+	}
+
+	/**
+	 * A sample without an app: none could be read (Wayland, or a moment on Windows). The open
+	 * segment ends, and a long time since the last sample is still a sleep gap.
+	 */
+	none(at: number): { writes: Segment[]; gap: Interval | null } {
+		const { writes, gap } = this.wake(at);
+		writes.push(...this.closeOpen(at));
 		return { writes, gap };
 	}
 
@@ -74,6 +77,19 @@ export class Segmenter {
 	/** The open segment, for live totals. */
 	current(): Segment | null {
 		return this.open ? { ...this.open } : null;
+	}
+
+	/** Records the sample time. After a sleep the open segment ends at the last sample. */
+	private wake(at: number): { writes: Segment[]; gap: Interval | null } {
+		const writes: Segment[] = [];
+		let gap: Interval | null = null;
+		if (this.lastSampleAt !== null && at - this.lastSampleAt > SLEEP_GAP_MS) {
+			gap = { start: this.lastSampleAt, end: at };
+			writes.push(...this.closeOpen(this.lastSampleAt));
+			this.last = null;
+		}
+		this.lastSampleAt = at;
+		return { writes, gap };
 	}
 
 	private closeOpen(at: number): Segment[] {

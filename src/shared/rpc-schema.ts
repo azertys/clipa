@@ -83,7 +83,15 @@ export type IdlePrompt = { id: string; entryId: string; start: number; end: numb
 export type IdleAction = "keep" | "discard" | "discardStop";
 
 /** Accessibility permission (window titles) and launch at login, for Settings. */
-export type TrackingStatus = { nativeLoaded: boolean; titlePermission: boolean; launchAtLogin: LaunchAtLogin };
+export type TrackingStatus = {
+	nativeLoaded: boolean;
+	titlePermission: boolean;
+	launchAtLogin: LaunchAtLogin;
+	/** Clipa can read the active app (on Linux, not on every Wayland desktop). */
+	seesApps: boolean;
+	/** Clipa can read the idle time (on Linux, not on every Wayland desktop). */
+	measuresIdle: boolean;
+};
 
 export type LaunchAtLogin = "on" | "off" | "approval" | "unavailable";
 

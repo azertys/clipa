@@ -29,6 +29,7 @@ function fakeTracker() {
 			return state.permission ? state.title : null;
 		},
 		idleSeconds: () => state.idleSeconds,
+		measuresIdle: () => true,
 		hasTitlePermission: () => state.permission,
 		requestTitlePermission: () => {},
 	};
@@ -224,6 +225,21 @@ describe("idle (M4 acceptance)", () => {
 		// The segment closed at the last sample before the sleep.
 		expect(s.activity()[0].ended_at).toBe(before);
 		s.timer.stop();
+	});
+
+	test("without an app (Wayland) nothing is recorded, but a sleep gap still asks", () => {
+		const s = setup();
+		s.timer.start({ note: "", tagIds: [] });
+		s.run(5);
+		s.state.app = null;
+		s.run(5);
+		expect(s.activity()).toEqual([expect.objectContaining({ display_name: "Code", ended_at: s.ctx.now() - 4 * SEC })]);
+		const before = s.ctx.now();
+		s.advance(30 * MIN);
+		s.tracking.sampler.tick();
+		expect(s.prompts).toEqual([expect.objectContaining({ start: before, end: s.ctx.now() })]);
+		s.timer.stop();
+		expect(s.activity()).toHaveLength(1);
 	});
 
 	test("discard in the middle of an entry gives two entries with the same note and tags, in one step", () => {

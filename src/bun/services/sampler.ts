@@ -72,17 +72,18 @@ export class Sampler {
 		const settings = this.opts.settings();
 		const at = this.opts.now();
 		const app = this.safely(() => this.opts.tracker.frontmostApp());
-		if (!app) return;
+		// Without an app nothing is recorded, but the time since the last sample still shows a sleep.
+		if (!app) return this.record(this.segmenter.none(at));
 		const excluded = settings.excludedApps.includes(app.key);
 		const titled = settings.recordTitles && !excluded && !settings.noTitleApps.includes(app.key);
 		const title = titled ? this.safely(() => this.opts.tracker.focusedWindowTitle()) : null;
-		const { writes, gap } = this.segmenter.sample(
-			excluded
-				? { at, appKey: EXCLUDED_KEY, appName: this.opts.excludedName, title: null }
-				: { at, appKey: app.key, appName: app.name, title },
+		this.record(
+			this.segmenter.sample(
+				excluded
+					? { at, appKey: EXCLUDED_KEY, appName: this.opts.excludedName, title: null }
+					: { at, appKey: app.key, appName: app.name, title },
+			),
 		);
-		this.write(writes);
-		if (gap) this.opts.onSleep?.(gap);
 	}
 
 	/** Call after a blocking native dialog: the time is not a sleep gap. */
@@ -121,6 +122,11 @@ export class Sampler {
 			}))
 			.filter((a) => a.ms > 0)
 			.sort((a, b) => b.ms - a.ms);
+	}
+
+	private record({ writes, gap }: { writes: Segment[]; gap: Interval | null }) {
+		this.write(writes);
+		if (gap) this.opts.onSleep?.(gap);
 	}
 
 	private write(segments: Segment[]) {

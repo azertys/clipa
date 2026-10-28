@@ -51,6 +51,7 @@ export function loadMac(path: string): { tracker: NativeTracker; system: NativeS
 		},
 		focusedWindowTitle: () => take(lib.tn_focused_window_title() as Pointer | null),
 		idleSeconds: () => lib.tn_idle_seconds(),
+		measuresIdle: () => true,
 		hasTitlePermission: () => lib.tn_ax_trusted(0) === 1,
 		requestTitlePermission: () => void lib.tn_ax_trusted(1),
 	};

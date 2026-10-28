@@ -1,4 +1,4 @@
-// Reports (spec section 7). All calculation is in ms on half-open intervals.
+// Reports. All calculation is in ms on half-open intervals.
 import { entryInterval } from "./entries";
 import { clip, intersect, length, merge, splitByLocalDay, subtract } from "./overlap";
 import { expandInstances } from "./recurrence";
@@ -71,7 +71,7 @@ export type TitleTime = { title: string | null; ms: number };
 /** The longest titles per app that a report keeps. */
 export const TITLES_PER_APP = 25;
 
-/** The spec's Report, plus the entry count, and planned time, color, all-day and recurring on each event. */
+/** The totals of a range: tracked time by tag and by app, entries, and the events with their planned time. */
 export type Report = {
 	range: { from: number; to: number; tzid: string };
 	/** Entries with time inside the range. */

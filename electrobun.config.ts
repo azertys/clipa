@@ -1,6 +1,6 @@
 import type { ElectrobunConfig } from "electrobun";
 
-// Signing and notarization turn on when their credentials are in the environment (docs/release.md).
+// Signing and notarization turn on when their credentials are in the environment (README.md).
 // Without them the build is unsigned, which is enough for this Mac.
 const env = process.env;
 const signed = Boolean(env.ELECTROBUN_DEVELOPER_ID);
@@ -9,7 +9,7 @@ const notarized =
 	(Boolean(env.ELECTROBUN_APPLEAPIKEY && env.ELECTROBUN_APPLEAPIISSUER) ||
 		Boolean(env.ELECTROBUN_APPLEID && env.ELECTROBUN_APPLEIDPASS && env.ELECTROBUN_TEAMID));
 
-// Hutch builds only for the OS it runs on (docs/release.md), so each OS copies its own files.
+// Hutch builds only for the OS it runs on, so each OS copies its own files.
 // The tray images are in assets/tray (assets/README.md); src/bun/tray.ts picks them by name.
 const platformCopy: Record<string, Record<string, string>> = {
 	darwin: {
@@ -54,7 +54,7 @@ export default {
 			// An Icon Composer icon: the clock is a layer, so macOS draws the light, dark, clear and
 			// tinted styles. Hutch compiles it with Xcode's actool (Assets.car and an .icns fallback).
 			icons: "assets/Clipa.icon",
-			// Hutch also signs the nested Mach-O files, so the dylib gets the app's identity (spec section 8).
+			// Hutch also signs the nested Mach-O files, so the dylib gets the app's identity.
 			codesign: signed,
 			notarize: notarized,
 		},

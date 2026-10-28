@@ -222,7 +222,7 @@ export function createRpc(app: AppContext) {
 				},
 				backupImport: ({ json }) => {
 					const backup = parseBackupFile(json);
-					// No import without the copy (spec section 9).
+					// No import without the copy.
 					let copy: string;
 					try {
 						copy = backups.beforeImport();
@@ -247,7 +247,7 @@ export function createRpc(app: AppContext) {
 						canChooseDirectory: true,
 						allowsMultipleSelection: false,
 					});
-					// The dialog blocked this process; that time is not sleep (D47).
+					// The dialog blocked this process; that time is not sleep.
 					tracking.sampler.resume();
 					if (!folder) return null;
 					const previous = readSettings(db).backupFolder;

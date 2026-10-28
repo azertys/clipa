@@ -49,7 +49,7 @@ export type EventException = SyncColumns & {
 	new_notes: string | null;
 };
 
-/** The spec's Instance, plus notes, color and recurring for the calendar. */
+/** One occurrence of an event, with notes, color and recurring for the calendar. */
 export type Instance = {
 	eventId: string;
 	originalStart: number; // UTC ms of the generated occurrence

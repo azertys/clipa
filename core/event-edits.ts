@@ -1,4 +1,4 @@
-// Creating, editing and deleting events and single occurrences (spec section 6).
+// Creating, editing and deleting events and single occurrences.
 // Pure functions: they return the rows to write. The main process writes them in one
 // transaction through writeRow(), which stamps the sync columns.
 import { allDayDays, firstOccurrence, isOccurrence, isValidRule, occurrenceEnd, occurrenceStarts } from "./recurrence";

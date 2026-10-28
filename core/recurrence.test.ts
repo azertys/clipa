@@ -99,7 +99,7 @@ describe("expandInstances, one-off events", () => {
 	});
 });
 
-describe("expandInstances, DST (spec section 12)", () => {
+describe("expandInstances, DST", () => {
 	test("DST end: daily 08:00–12:00 keeps 08:00 local and lasts 4 h", () => {
 		const e = event({ starts_at: utc("2026-10-20T05:00:00Z"), duration_ms: 4 * HOUR, rrule: "FREQ=DAILY" });
 		const out = expandInstances([e], [], utc("2026-10-23T21:00:00Z"), utc("2026-10-26T22:00:00Z"));
@@ -127,7 +127,7 @@ describe("expandInstances, DST (spec section 12)", () => {
 	});
 });
 
-describe("expandInstances, exceptions (spec section 12)", () => {
+describe("expandInstances, exceptions", () => {
 	// Weekly on Monday 09:00 local from 2026-10-05.
 	const weekly = event({ starts_at: utc("2026-10-05T06:00:00Z"), duration_ms: HOUR, rrule: "FREQ=WEEKLY;BYDAY=MO" });
 	const oct12 = utc("2026-10-12T06:00:00Z");
@@ -218,7 +218,7 @@ describe("expandInstances, rules", () => {
 		expect(starts([e], [], "2026-10-04T21:00:00Z", "2026-10-11T21:00:00Z")).toHaveLength(5);
 	});
 
-	test("monthly on day 31 skips months without a day 31 (open question 8)", () => {
+	test("monthly on day 31 skips months without a day 31", () => {
 		const e = event({ starts_at: utc("2026-01-31T07:00:00Z"), duration_ms: HOUR, rrule: "FREQ=MONTHLY" });
 		const days = expandInstances([e], [], utc("2026-01-01T00:00:00Z"), utc("2026-09-01T00:00:00Z")).map((i) =>
 			new Date(i.start).toISOString().slice(0, 10),

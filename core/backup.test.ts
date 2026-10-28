@@ -34,7 +34,7 @@ const reason = (fn: () => unknown) => {
 	return "no error";
 };
 
-describe("merge rule (spec section 9 and 12)", () => {
+describe("merge rule", () => {
 	test("a row that is not here is added", () => {
 		expect(mergeAction(null, { updated_at: 5, device_id: "a" })).toBe("add");
 	});

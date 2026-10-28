@@ -20,7 +20,7 @@ export type SamplerOptions = {
 	settings: () => Settings;
 	/** Display name of the excluded apps, from strings.ts */
 	excludedName: string;
-	/** The time between two samples showed that the system slept (spec section 8). */
+	/** The time between two samples showed that the system slept. */
 	onSleep?: (gap: Interval) => void;
 	newId?: () => string;
 	/** Tests run ticks by hand with 0. */

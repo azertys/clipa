@@ -5,7 +5,7 @@ import { listEntries } from "./entries";
 import { eventsForRange } from "./events";
 import { AppError } from "./repo";
 
-/** Activity of live entries that touches [from, to). The sampler (M4) writes it. */
+/** Activity of live entries that touches [from, to). The sampler writes it. */
 export function listActivity(db: Database, from: number, to: number): ActivityRow[] {
 	return db
 		.query(

@@ -7,3 +7,7 @@ artifacts/
 .cottontail-tmp/
 native/macos/.build/
 .DS_Store
+
+# Notes kept locally, outside the repository
+docs/
+llms.txt

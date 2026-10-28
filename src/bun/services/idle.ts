@@ -25,7 +25,7 @@ export type IdleOptions = {
 const toPrompt = (p: IdlePeriod): IdlePrompt => ({ id: p.id, entryId: p.entry_id, start: p.started_at, end: p.ended_at! });
 
 /**
- * Watches for idle time while the timer runs (spec section 5). Past the threshold it records a
+ * Watches for idle time while the timer runs. Past the threshold it records a
  * pending idle period; when input starts again it ends the period and asks the user. A sleep gap
  * from the sampler is idle time too. One question at a time.
  */

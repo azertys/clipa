@@ -27,7 +27,7 @@ function setup() {
 	return { ...t, folder, backups, files };
 }
 
-describe("automatic backup (spec section 9)", () => {
+describe("automatic backup", () => {
 	test("one copy per local day, made at the first check", () => {
 		const s = setup();
 		expect(s.backups.daily()).toEndWith("clipa-2026-10-26.db");

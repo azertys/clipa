@@ -1,4 +1,4 @@
-// CSV export (spec sections 7 and 9). RFC 4180: comma separated, CRLF line ends, fields with a
+// CSV export. RFC 4180: comma separated, CRLF line ends, fields with a
 // comma, quote or line break in double quotes. A UTF-8 byte order mark lets Excel read non-ASCII text.
 import type { Report } from "./reports";
 import { formatDuration, isoLocal, localDate } from "./time";
@@ -97,7 +97,7 @@ export function reportCsv(
 }
 
 /**
- * Entries as CSV (spec section 9). Local times with the offset, tags separated by ";", the note
+ * Entries as CSV. Local times with the offset, tags separated by ";", the note
  * always quoted. A running entry has no end and counts up to now.
  */
 export function entriesCsv(

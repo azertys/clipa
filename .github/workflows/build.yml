@@ -1,8 +1,8 @@
 # Builds Clipa for Windows and Linux. Hutch builds only for the OS it runs on, so each OS has its
-# own runner (docs/release.md). The macOS build comes from a Mac (`hutch run build`): a macOS
+# own runner (README.md, "Build"). The macOS build comes from a Mac (`hutch run build`): a macOS
 # runner uses the free minutes 10 times as fast. Start it from the Actions tab, or push a tag such
 # as v0.2.0. Each run keeps the files of artifacts/ as one download per OS, for 7 days. A tag also
-# puts the files on a draft GitHub release for that tag (docs/release.md, section 6).
+# puts the files on a draft GitHub release for that tag.
 name: Build
 
 on:
@@ -30,7 +30,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # A release must have the version of its tag (docs/release.md, section 2).
+      # A release must have the version of its tag.
       - name: Check the version
         if: startsWith(github.ref, 'refs/tags/v')
         shell: bash
@@ -71,7 +71,7 @@ jobs:
       - run: hutch run check
         if: runner.os == 'Linux'
       - run: hutch run test
-      # Unsigned: the signing variables of docs/release.md are not set here.
+      # Unsigned: the signing variables (README.md, "Signing") are not set here.
       - run: hutch run build
 
       - uses: actions/upload-artifact@v6

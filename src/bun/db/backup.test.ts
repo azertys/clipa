@@ -70,7 +70,7 @@ function filled() {
 
 const roundTrip = (backup: Backup) => parseBackupFile(JSON.stringify(backup));
 
-describe("backup export and import (M5 acceptance)", () => {
+describe("backup export and import", () => {
 	test("export → empty database → import gives the same rows and checksums", () => {
 		const source = filled();
 		const backup = roundTrip(exportBackup(source.db, source.ctx, true));
@@ -121,7 +121,7 @@ describe("backup export and import (M5 acceptance)", () => {
 	});
 });
 
-describe("import merge (spec section 12)", () => {
+describe("import merge", () => {
 	function twoDevices() {
 		const a = testDb();
 		const b = testDb();
@@ -163,7 +163,7 @@ describe("import merge (spec section 12)", () => {
 		expect(getEntry(a.db, entry.id)?.deleted_at).not.toBeNull();
 	});
 
-	test("a tag with a local tag's name merges into it (open question 6)", () => {
+	test("a tag with a local tag's name merges into it", () => {
 		const { a, b } = twoDevices();
 		const local = saveTag(a.db, a.ctx, { name: "Work" });
 		const theirs = saveTag(b.db, b.ctx, { name: "work" });
@@ -178,7 +178,7 @@ describe("import merge (spec section 12)", () => {
 		expect(checksums(a.db)).toEqual(before);
 	});
 
-	test("an imported running entry is closed when one runs here (open question 7)", () => {
+	test("an imported running entry is closed when one runs here", () => {
 		const { a, b } = twoDevices();
 		const mine = running(a.db, a.ctx, MON, "mine");
 		b.advance(10 * 60_000);

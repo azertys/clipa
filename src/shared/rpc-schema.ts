@@ -1,6 +1,6 @@
 // Typed RPC contract between the webview and the main process.
 // Types only: this module emits no runtime code.
-// Names are camelCase versions of the spec's dotted names (docs/decisions.md, D2).
+// Names are the area, then the action: entriesList, timerStart.
 import type { RPCSchema } from "electrobun/view";
 import type { ImportSummary } from "../../core/backup";
 import type { Combo } from "../../core/entries";
@@ -45,7 +45,7 @@ export type Settings = {
 	excludedApps: string[];
 	/** Days to keep app activity; 0 = forever. */
 	activityDays: ActivityDays;
-	/** Copy the database once a day (spec section 9). */
+	/** Copy the database once a day. */
 	autoBackup: boolean;
 	/** Folder for the database copies; null = <userData>/backups. */
 	backupFolder: string | null;
@@ -143,12 +143,11 @@ export type ClipaRPC = {
 
 			eventsInstances: { params: { from: number; to: number }; response: Instance[] };
 			eventsGet: { params: { id: string }; response: EventDetail | null };
-			/** The spec's events.upsert is split into create and editOccurrence (D21). */
 			eventsCreate: { params: { fields: EventFields; tzid: string }; response: CalendarEvent };
 			eventsEditOccurrence: { params: OccurrenceRef & { changes: Partial<EventFields> }; response: true };
 			eventsDeleteOccurrence: { params: OccurrenceRef; response: true };
 
-			/** The idle question waiting for an answer, for the idle window (D54). */
+			/** The idle question waiting for an answer, for the idle window. */
 			idleQuestion: { params: {}; response: IdlePrompt | null };
 			idleResolve: { params: { id: string; action: IdleAction }; response: true };
 			trackingStatus: { params: {}; response: TrackingStatus };
@@ -163,10 +162,10 @@ export type ClipaRPC = {
 			timerApps: { params: {}; response: AppUsage[] };
 
 			reportsGet: { params: ReportQuery; response: Report };
-			/** Writes report tables as CSV files to Downloads and shows them in the file manager (D31). */
+			/** Writes report tables as CSV files to Downloads and shows them in the file manager. */
 			reportsExportCsv: { params: ReportQuery & { tables: ReportTable[] }; response: { paths: string[] } };
 
-			/** Writes the JSON backup (spec section 9) to Downloads and shows it in the file manager. */
+			/** Writes the JSON backup to Downloads and shows it in the file manager. */
 			backupExport: { params: { tzid: string }; response: { path: string } };
 			/** Writes entries as CSV to Downloads and shows the file in the file manager. */
 			entriesExportCsv: { params: EntriesExport; response: { path: string } };
@@ -175,7 +174,7 @@ export type ClipaRPC = {
 			backupStatus: { params: {}; response: BackupStatus };
 			/** Asks for the backup folder. Returns the new settings, or null when cancelled. */
 			backupChooseFolder: { params: {}; response: Settings | null };
-			/** The only network call: made when the user clicks "Check for updates" (open question 5). */
+			/** The only network call: made when the user clicks "Check for updates". */
 			updateCheck: { params: {}; response: UpdateCheck };
 			/** Downloads the update, then restarts Clipa. A running timer continues after the restart. */
 			updateInstall: { params: {}; response: true };

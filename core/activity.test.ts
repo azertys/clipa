@@ -115,7 +115,7 @@ describe("Segmenter", () => {
 	});
 });
 
-describe("planIdleDiscard (spec section 12)", () => {
+describe("planIdleDiscard", () => {
 	const at = (h: number, m = 0) => (h * 60 + m) * MIN;
 	const row = (id: string, from: number, to: number): ActivityRow => ({
 		id,

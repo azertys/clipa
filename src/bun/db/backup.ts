@@ -18,7 +18,7 @@ import {
 import { MIN_ENTRY_MS } from "../services/timer";
 import { AppError, SYNC_TABLES, writeRow, type WriteContext } from "./repo";
 
-// Export and import of the JSON backup (spec section 9). Writes go through writeRow (D13).
+// Export and import of the JSON backup. Writes go through writeRow.
 
 const columns = (table: keyof typeof BACKUP_FIELDS) => Object.keys(BACKUP_FIELDS[table]);
 
@@ -37,7 +37,7 @@ export function exportBackup(db: Database, ctx: WriteContext, includeAppData: bo
 	return { format: BACKUP_FORMAT, version: BACKUP_VERSION, exportedAt: ctx.now(), deviceId: ctx.deviceId, tables };
 }
 
-/** A consistent copy of the database file (spec section 9: VACUUM INTO). The file must not exist. */
+/** A consistent copy of the database file (VACUUM INTO). The file must not exist. */
 export function copyDatabase(db: Database, path: string): void {
 	db.query("VACUUM INTO ?").run(path);
 }
@@ -57,10 +57,10 @@ const asVersion = (row: BackupRow): RowVersion => ({
 });
 
 /**
- * Merges a backup into the database in one transaction (spec section 9). Each row is added,
+ * Merges a backup into the database in one transaction. Each row is added,
  * updated or skipped by mergeAction. The rows keep their updated_at and device_id, so a second
  * import of the same file changes nothing. Three conflicts with local rows are resolved here:
- * a tag name in use (open question 6), a second running entry (open question 7) and a second
+ * a tag name in use, a second running entry and a second
  * live exception for one occurrence.
  */
 export function importBackup(db: Database, ctx: WriteContext, backup: Backup, backupPath: string): ImportSummary {

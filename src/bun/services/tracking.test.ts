@@ -76,7 +76,7 @@ function setup() {
 	return { ...t, state, tracker, timer, tracking, prompts, run, activity };
 }
 
-describe("sampler (M4 acceptance)", () => {
+describe("sampler", () => {
 	test("no activity row is written while the timer is stopped", () => {
 		const s = setup();
 		s.run(5);
@@ -174,7 +174,7 @@ describe("sampler (M4 acceptance)", () => {
 	});
 });
 
-describe("idle (M4 acceptance)", () => {
+describe("idle", () => {
 	test("idle past the threshold is recorded; when input starts again the user is asked", () => {
 		const s = setup();
 		const entry = s.timer.start({ note: "", tagIds: [] });

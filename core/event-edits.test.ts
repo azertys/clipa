@@ -191,7 +191,7 @@ describe("edit: all occurrences", () => {
 });
 
 describe("edit: this and following", () => {
-	test("split with COUNT: old series has 3, new series has 7 (spec section 12)", () => {
+	test("split with COUNT: old series has 3, new series has 7", () => {
 		const s = weeklyMonday("FREQ=WEEKLY;BYDAY=MO;COUNT=10;INTERVAL=1");
 		const fourth = utc("2026-10-26T07:00:00Z");
 		s.edit(fourth, "following", { start: fourth + HOUR, end: fourth + 2 * HOUR, title: "Later" });

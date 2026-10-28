@@ -2,7 +2,7 @@ import type { Database } from "bun:sqlite";
 import type { ActivityRow, Segment } from "../../../core/activity";
 import type { AppTime } from "../../../core/reports";
 
-// Local-only tables: apps, activity and idle_periods. They are not synced (spec section 4).
+// Local-only tables: apps, activity and idle_periods. They are not synced.
 
 export type App = { id: string; platform_key: string; display_name: string };
 

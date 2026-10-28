@@ -3,7 +3,7 @@
 	import { strings } from "../strings";
 	import Button from "../ui/Button.svelte";
 
-	// The result of an import (spec section 9: rows added, updated, skipped). Esc closes it.
+	// The result of an import (rows added, updated, skipped). Esc closes it.
 	let { summary, onclose }: { summary: ImportSummary; onclose: () => void } = $props();
 
 	let dialog: HTMLDialogElement;

@@ -1,5 +1,5 @@
 // Date labels for the view: "Monday, 26 October", "Mon 19", "20 – 26 Oct".
-// The UI is English only (open question 1), so names come from Intl in English.
+// The UI is English only, so names come from Intl in English.
 import { Temporal } from "../../../core/temporal";
 import { strings } from "../strings";
 

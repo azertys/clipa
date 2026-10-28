@@ -1,9 +1,9 @@
-// JSON backup, import merge and backup file names (spec section 9). Pure logic: the database
+// JSON backup, import merge and backup file names. Pure logic: the database
 // code in src/bun/db/backup.ts reads and writes the rows.
 
 export const BACKUP_FORMAT = "clipa-backup";
 export const BACKUP_VERSION = 1;
-/** Automatic backups kept per kind (spec section 9: "keep the last 14 copies"). */
+/** Automatic backups kept per kind. */
 export const KEEP_BACKUPS = 14;
 
 /** The syncable tables, in the order an import writes them (parents first). */
@@ -144,7 +144,7 @@ export type RowVersion = { updated_at: number; device_id: string };
 export type MergeAction = "add" | "update" | "skip";
 
 /**
- * What an import does with one row (spec section 9): the newer updated_at wins; on a tie the
+ * What an import does with one row: the newer updated_at wins; on a tie the
  * larger device_id wins. The same version is the same row, so a second import skips it.
  */
 export function mergeAction(local: RowVersion | null, incoming: RowVersion): MergeAction {
@@ -157,9 +157,9 @@ export type ImportCounts = { added: number; updated: number; skipped: number };
 
 export type ImportSummary = ImportCounts & {
 	tables: Record<BackupTableName, ImportCounts>;
-	/** Imported tags that have the name of a local tag: their entries use the local tag (open question 6). */
+	/** Imported tags that have the name of a local tag: their entries use the local tag. */
 	mergedTags: number;
-	/** Imported running entries closed because a local entry runs (open question 7). */
+	/** Imported running entries closed because a local entry runs. */
 	closedEntries: number;
 	/** The copy of the database made before the import. */
 	backupPath: string;

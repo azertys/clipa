@@ -53,7 +53,7 @@ const db = openDatabase(dbPath);
 const ctx: WriteContext = { deviceId: deviceId(db), now: Date.now };
 console.log(`[clipa] db=${dbPath}`);
 
-// Database copies (spec section 9): today's at start, then checked every hour while Clipa runs.
+// Database copies: today's at start, then checked every hour while Clipa runs.
 const backups = new Backups({
 	db,
 	now: ctx.now,
@@ -145,7 +145,7 @@ const tracking = new Tracking({
 	timer,
 	settings: () => readSettings(db),
 	excludedName: strings.tracking.excluded,
-	// The question is in a window of its own (a native dialog would block this process, D11).
+	// The question is in a window of its own (a native dialog would block this process).
 	onPrompt: () => openIdleWindow(),
 });
 
@@ -221,7 +221,7 @@ let idleWindow: BrowserWindow | null = null;
 
 /**
  * The idle question in a small window of its own, on top of other apps and on every desktop,
- * with the focus (D54). The view loads in idle mode (#idle) and asks for the question.
+ * with the focus. The view loads in idle mode (#idle) and asks for the question.
  */
 function openIdleWindow() {
 	if (idleWindow) {
@@ -293,7 +293,7 @@ async function confirmQuit() {
 		defaultId: 0,
 		cancelId: 2,
 	});
-	// The dialog blocked this process; that time is not sleep (D47).
+	// The dialog blocked this process; that time is not sleep.
 	tracking.sampler.resume();
 	if (response === 0) timer.stop();
 	else if (response === 1) timer.markKeptOnQuit();
@@ -303,8 +303,8 @@ async function confirmQuit() {
 }
 
 // --- Update ----------------------------------------------------------------
-// Only when the user asks (open question 5). An update restart keeps the timer running, as
-// "Quit and keep running" does (D12), so the quit question is not asked.
+// Only when the user asks. An update restart keeps the timer running, as
+// "Quit and keep running" does, so the quit question is not asked.
 async function installUpdate() {
 	try {
 		await Updater.downloadUpdate();

@@ -89,7 +89,7 @@ CREATE TABLE activity (
 );
 CREATE INDEX activity_entry ON activity(entry_id, started_at);
 
--- Deviation from the spec: ended_at is NULL while the period is pending,
+-- ended_at is NULL while the period is pending,
 -- because the end is not known until input starts again.
 CREATE TABLE idle_periods (
   id TEXT PRIMARY KEY,

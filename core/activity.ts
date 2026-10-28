@@ -1,4 +1,4 @@
-// Application tracking (spec section 8) and the idle split (section 5). Pure logic:
+// Application tracking and the idle split. Pure logic:
 // the sampler service feeds samples in and writes what comes out.
 import type { Interval } from "./types";
 
@@ -131,7 +131,7 @@ export type IdleDiscardPlan = {
 };
 
 /**
- * "Discard" and "Discard and stop" for an idle period (spec section 5).
+ * "Discard" and "Discard and stop" for an idle period.
  * Discard: the entry ends at the idle start and a new entry starts at the idle end.
  * Discard and stop: the entry ends at the idle start. Activity inside the idle time is deleted;
  * activity after it moves to the new entry, or is deleted when there is none.

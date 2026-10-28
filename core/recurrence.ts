@@ -2,7 +2,7 @@
 //
 // rrule runs in floating mode: a Date's UTC fields hold the local wall-clock time of the
 // event's zone. Temporal converts each wall-clock time to an instant. rrule's own tzid
-// support gives results that depend on the process time zone (docs/decisions.md, D19).
+// support gives results that depend on the process time zone.
 import { RRule } from "rrule";
 import { formatRule, parseUntil, ruleParts } from "./repeat";
 import { Temporal } from "./temporal";
@@ -108,7 +108,7 @@ export function isOccurrence(event: Pick<CalendarEvent, "rrule" | "starts_at" | 
 	return occurrenceStarts(event, start, start + 1).length === 1;
 }
 
-/** Number of whole days an all-day event covers. duration_ms is days × 24 h (open question 9). */
+/** Number of whole days an all-day event covers. duration_ms is days × 24 h. */
 export function allDayDays(durationMs: number): number {
 	return Math.max(1, Math.round(durationMs / DAY));
 }

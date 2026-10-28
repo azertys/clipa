@@ -7,7 +7,7 @@
 	import { strings } from "./strings";
 	import Button from "./ui/Button.svelte";
 
-	// The idle question (spec section 5) in a small window of its own, on top of other apps (D54).
+	// The idle question in a small window of its own, on top of other apps.
 	// Esc keeps the time, like Keep; so does closing the window (index.ts).
 	let prompt = $state<IdlePrompt | null>(null);
 	let busy = $state(false);

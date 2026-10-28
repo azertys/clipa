@@ -81,7 +81,7 @@ describe("report tables", () => {
 	});
 });
 
-describe("entries table (spec section 9)", () => {
+describe("entries table", () => {
 	const sync = { created_at: 0, updated_at: 0, deleted_at: null, device_id: "a" };
 	const entry = (start: string, end: string | null, note: string, tagIds: string[]): EntryWithTags => ({
 		id: start,

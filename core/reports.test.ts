@@ -12,7 +12,7 @@ const event = { start: at("08:00"), end: at("12:00") };
 const cover = (entries: ReturnType<typeof entry>[], range = DAY, now = at("23:00")) =>
 	eventCoverage(event, trackedIntervals(entries, range[0], range[1], now), range[0], range[1]);
 
-describe("eventCoverage (spec section 12)", () => {
+describe("eventCoverage", () => {
 	test("partial cover", () => {
 		expect(cover([entry("09:00", "11:00")])).toEqual({
 			plannedMs: 4 * HOUR,
@@ -73,7 +73,7 @@ test("coverageList leaves out all-day instances", () => {
 	expect(list[0].coverage).toBe(0);
 });
 
-describe("buildReport (spec section 12)", () => {
+describe("buildReport", () => {
 	const TZ = "Europe/Bucharest";
 	let n = 0;
 	const ev = (from: string, to: string, extra: Partial<CalendarEvent> = {}): CalendarEvent => ({

@@ -21,7 +21,7 @@ export type BackupsOptions = {
 };
 
 /**
- * Copies of the database file (spec section 9): one a day while automatic backup is on, and one
+ * Copies of the database file: one a day while automatic backup is on, and one
  * before every import. Each kind keeps its newest 14 files; other files in the folder are left alone.
  */
 export class Backups {

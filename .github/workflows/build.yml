@@ -1,8 +1,7 @@
-# Builds Clipa for Windows and Linux. Hutch builds only for the OS it runs on, so each OS has its
-# own runner (README.md, "Build"). The macOS build comes from a Mac (`hutch run build`): a macOS
-# runner uses the free minutes 10 times as fast. Start it from the Actions tab, or push a tag such
-# as v0.2.0. Each run keeps the files of artifacts/ as one download per OS, for 7 days. A tag also
-# puts the files on a draft GitHub release for that tag.
+# Builds Clipa for macOS (Apple silicon), Windows and Linux. Hutch builds only for the OS it runs
+# on, so each OS has its own runner (README.md, "Build"). The builds are unsigned. Start it from the
+# Actions tab, or push a tag such as v0.2.0. Each run keeps the files of artifacts/ as one download
+# per OS, for 7 days. A tag also puts the files on a draft GitHub release for that tag.
 name: Build
 
 on:
@@ -19,6 +18,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Apple silicon, with Xcode 26 for actool (the Icon Composer app icon).
+          - os: macos-26
+            platform: macos-arm64
           - os: windows-2025
             platform: windows-x64
           - os: ubuntu-24.04
@@ -79,7 +81,7 @@ jobs:
           name: clipa-${{ matrix.platform }}
           path: artifacts/
           if-no-files-found: error
-          # The free plan stores 500 MB; one run uploads about 100 MB.
+          # A private repository on the free plan stores 500 MB; one run uploads about 165 MB.
           retention-days: 7
 
   release:
@@ -95,7 +97,7 @@ jobs:
           path: release
           merge-multiple: true
 
-      # A draft, so the Mac files can be added before it is published.
+      # A draft, to check before it is published.
       - name: Add the files to the release
         env:
           GH_TOKEN: ${{ github.token }}

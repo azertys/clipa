@@ -4,10 +4,35 @@ A local-first time tracker for the desktop. Start a timer from the window or the
 on a calendar, and see where your time went in reports. While a timer runs, Clipa can record which
 app is in front, and when you come back from a break it asks what to do with the idle time.
 
+![The Today screen: a running timer, the day's events and tracked time on a timeline, and the entries](.github/screenshot.png)
+
 All data stays in a SQLite database on your computer. The only network call is "Check for updates".
 
 Clipa runs on macOS, Windows and Linux. It's built with [Electrobun](https://framework.blackboard.sh/electrobun/)
 2 (a Bun main process with the system webview), Svelte 5 and SQLite.
+
+## Download
+
+The [Releases](https://github.com/azertys/clipa/releases) page has a build for each system:
+
+| File | For |
+| --- | --- |
+| `macos-arm64-Clipa.dmg` | macOS 14 or later on Apple silicon |
+| `win-x64-Clipa-Setup.zip` | Windows 10 or 11 (x64): unzip it and run the setup program |
+| `linux-x64-Clipa-Setup.tar.gz` | Linux (x64): extract it and run `installer` |
+
+The `stable-*` files are for the updater. On an Intel Mac or an ARM PC, build Clipa from source.
+
+The builds are unsigned. After a download, macOS refuses to open Clipa and can say that it's
+damaged. Move Clipa to Applications, then run this in Terminal:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Clipa.app
+```
+
+Launch at login needs a signed build on macOS, so it doesn't work in these builds.
+
+On Windows, SmartScreen warns on the first start: click "More info", then "Run anyway".
 
 ## Requirements
 
@@ -23,7 +48,7 @@ To run Clipa:
 
 To build it:
 
-- [Hutch](https://hutch.blackboard.sh), Electrobun's command line tool. It downloads the Electrobun
+- [Hutch](https://framework.blackboard.sh/electrobun/guides/hutch/), Electrobun's command line tool. It downloads the Electrobun
   and Bun versions that `hutch.config.ts` pins.
 - Node.js 20.19 or later, for Vite.
 - On macOS, Xcode 26. Swift builds the native library in `native/macos`, and `actool` compiles the
@@ -89,7 +114,7 @@ On macOS, signing and notarization turn on when these variables are set. Without
 Hutch signs the nested library too, so it gets the app's identity. An unsigned Mac build can't
 launch at login, and macOS asks again for the Accessibility permission after each rebuild.
 
-Windows builds are unsigned, so SmartScreen warns on the first start.
+Windows has no signing setup yet.
 
 ### Updates
 

@@ -1,7 +1,7 @@
 import type { ElectrobunConfig } from "electrobun";
 
 // Signing and notarization turn on when their credentials are in the environment (README.md).
-// Without them the build is unsigned, which is enough for this Mac.
+// Without them the build is unsigned.
 const env = process.env;
 const signed = Boolean(env.ELECTROBUN_DEVELOPER_ID);
 const notarized =
@@ -18,8 +18,8 @@ const platformCopy: Record<string, Record<string, string>> = {
 		"assets/tray/macos": "views/tray",
 	},
 	win32: { "assets/tray/windows": "views/tray" },
-	// AppIndicator takes a PNG file: the Windows PNGs.
-	linux: { "assets/tray/windows/png": "views/tray" },
+	// AppIndicator takes a PNG file.
+	linux: { "assets/tray/linux": "views/tray" },
 };
 
 export default {

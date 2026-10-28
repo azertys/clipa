@@ -35,6 +35,8 @@ export default {
 	scripts: {
 		// Builds native/macos into libclipanative.dylib before the copy step.
 		preBuild: "./scripts/build-native.ts",
+		// Signs an unsigned macOS build ad hoc, before the DMG is made.
+		postWrap: "./scripts/sign-adhoc.ts",
 	},
 	build: {
 		mainProcess: "bun",

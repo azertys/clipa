@@ -23,12 +23,9 @@ The [Releases](https://github.com/azertys/clipa/releases) page has a build for e
 
 The `stable-*` files are for the updater. On an Intel Mac or an ARM PC, build Clipa from source.
 
-The builds are unsigned. After a download, macOS refuses to open Clipa and can say that it's
-damaged. Move Clipa to Applications, then run this in Terminal:
-
-```bash
-xattr -dr com.apple.quarantine /Applications/Clipa.app
-```
+The builds are unsigned. The first time you open Clipa, macOS says that it can't verify it. Click
+"Done", then open System Settings > Privacy & Security and click "Open Anyway" next to the message
+about Clipa.
 
 Launch at login needs a signed build on macOS, so it doesn't work in these builds.
 
@@ -102,7 +99,8 @@ touches your real data.
 ### Signing
 
 On macOS, signing and notarization turn on when these variables are set. Without them,
-`hutch run build` makes an unsigned build.
+`hutch run build` makes an unsigned build, and `scripts/sign-adhoc.ts` signs it ad hoc so that
+macOS offers "Open Anyway" after a download.
 
 | Variable | For |
 | --- | --- |

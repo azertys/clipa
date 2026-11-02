@@ -67,7 +67,7 @@
 		gap: 6px;
 		min-height: 48px;
 		padding: 6px 8px 6px 0;
-		border-top: 1px solid var(--clipa-divider);
+		border-top: var(--clipa-row-divider);
 	}
 	.body {
 		flex: 1;
@@ -109,6 +109,7 @@
 		margin-right: 4px;
 	}
 	.apps {
+		font-family: var(--clipa-label-font);
 		font-size: 12px;
 		color: var(--clipa-faint);
 		flex: none;
@@ -124,5 +125,9 @@
 		text-align: right;
 		font-size: 14px;
 		font-weight: 600;
+	}
+	:global(:root[data-theme="retro"]) .dur {
+		width: 52px;
+		font-weight: 700;
 	}
 </style>

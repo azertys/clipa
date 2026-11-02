@@ -42,13 +42,16 @@
 		gap: 8px;
 		height: 36px;
 		padding: 0 12px;
-		border: 1px solid var(--clipa-border-strong);
+		border: var(--clipa-bw) solid var(--clipa-border-strong);
 		border-radius: var(--clipa-r-md);
 		background: var(--clipa-surface);
 		color: var(--clipa-muted);
 	}
+	:global(:root[data-theme="retro"]) .search {
+		background: var(--clipa-field);
+	}
 	.search:focus-within {
-		border-color: var(--clipa-accent);
+		border-color: var(--clipa-focus);
 	}
 	.search input {
 		flex: 1;

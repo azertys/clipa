@@ -10,6 +10,7 @@
 	import { app, tz } from "./lib/app.svelte";
 	import { primaryKey } from "./lib/keys";
 	import { api, send } from "./lib/rpc";
+	import { applyTheme } from "./lib/theme";
 	import Calendar from "./screens/Calendar.svelte";
 	import Entries from "./screens/Entries.svelte";
 	import Reports from "./screens/Reports.svelte";
@@ -21,6 +22,7 @@
 	import RunningTimerMini from "./ui/RunningTimerMini.svelte";
 	import Sidebar from "./ui/Sidebar.svelte";
 	import SidebarSummary from "./ui/SidebarSummary.svelte";
+	import TopBar from "./ui/TopBar.svelte";
 
 	const screens: Screen[] = ["today", "entries", "calendar", "reports", "settings"];
 
@@ -37,6 +39,9 @@
 		void [app.revision, app.running?.id];
 		void api.entriesList({ from, to }).then((list) => (weekEntries = list));
 	});
+
+	// The theme setting changes in Settings; main.ts applied the theme of the window's hash.
+	$effect(() => applyTheme(app.settings.theme));
 
 	onMount(async () => {
 		await app.load();
@@ -87,21 +92,31 @@
 	<RecoveryDialog notice={app.recovery} onclose={() => (app.recovery = null)} />
 {/if}
 
-<AppShell flush={app.screen === "calendar"}>
-	{#snippet sidebar()}
-		<Sidebar active={app.screen} onnavigate={(id) => (app.screen = id)}>
-			{#snippet footer()}
-				{#if app.running}
-					<RunningTimerMini
-						elapsedMs={app.now - app.running.started_at}
-						note={app.note}
-						onclick={() => (app.screen = "today")}
-					/>
-				{:else}
-					<SidebarSummary {todayMs} {weekMs} />
-				{/if}
-			{/snippet}
-		</Sidebar>
+<!-- The running timer, or today's and this week's totals: in the sidebar, or compact in the top bar -->
+{#snippet summary(compact: boolean)}
+	{#if app.running}
+		<RunningTimerMini
+			{compact}
+			elapsedMs={app.now - app.running.started_at}
+			note={app.note}
+			onclick={() => (app.screen = "today")}
+		/>
+	{:else}
+		<SidebarSummary {compact} {todayMs} {weekMs} />
+	{/if}
+{/snippet}
+
+<AppShell flush={app.screen === "calendar"} top={app.traits.nav === "topbar"}>
+	{#snippet nav()}
+		{#if app.traits.nav === "topbar"}
+			<TopBar active={app.screen} onnavigate={(id) => (app.screen = id)}>
+				{#snippet status()}{@render summary(true)}{/snippet}
+			</TopBar>
+		{:else}
+			<Sidebar active={app.screen} onnavigate={(id) => (app.screen = id)}>
+				{#snippet footer()}{@render summary(false)}{/snippet}
+			</Sidebar>
+		{/if}
 	{/snippet}
 
 	{#if app.error}
@@ -130,7 +145,7 @@
 		align-items: center;
 		gap: 12px;
 		padding: 6px 6px 6px 14px;
-		border: 1px solid var(--clipa-danger);
+		border: var(--clipa-bw) solid var(--clipa-danger);
 		border-radius: var(--clipa-r-lg);
 		background: var(--clipa-danger-tint);
 		color: var(--clipa-danger-text);

@@ -58,7 +58,7 @@
 				{:else}
 					<div class="line"><span>{app.name}</span><span class="v clipa-num">{formatDuration(app.ms)}</span></div>
 				{/if}
-				<CoverageBar value={share(app.ms)} tone="accent" />
+				<CoverageBar value={share(app.ms)} tone="app" variant="bar" />
 				{#if titled && open[app.name]}
 					<ul class="titles">
 						{#each app.titles ?? [] as t (t.title)}
@@ -84,7 +84,7 @@
 				<div class="line">
 					<span class="muted">{rows.other.name}</span><span class="v clipa-num">{formatDuration(rows.other.ms)}</span>
 				</div>
-				<CoverageBar value={share(rows.other.ms)} tone="neutral" />
+				<CoverageBar value={share(rows.other.ms)} tone="neutral" variant="bar" />
 			</li>
 		{/if}
 	</ul>
@@ -114,6 +114,9 @@
 		justify-content: space-between;
 		gap: 8px;
 		font-size: 13px;
+	}
+	:global(:root[data-theme="retro"]) .line {
+		font-size: 15px;
 	}
 	.toggle {
 		width: 100%;
@@ -153,7 +156,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
-		border-left: 1px solid var(--clipa-divider);
+		border-left: var(--clipa-row-divider);
 		font-size: 12px;
 		color: var(--clipa-text-2);
 	}

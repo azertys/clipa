@@ -1,21 +1,25 @@
-<script lang="ts">
-	import type { Snippet } from "svelte";
-	import lockup from "../../../assets/logo/clipa-lockup-white.svg";
+<script lang="ts" module>
 	import type { Screen } from "../../shared/rpc-schema";
 	import { shortcut } from "../lib/keys";
-	import { strings } from "../strings";
-	import Icon from "./Icon.svelte";
 	import type { IconName } from "./icons";
 
 	type NavItem = { id: Screen; shortcut: string; icon: IconName };
 
-	const items: NavItem[] = [
+	/** The screens, for the sidebar and the top bar */
+	export const navItems: NavItem[] = [
 		{ id: "today", shortcut: shortcut("1"), icon: "today" },
 		{ id: "entries", shortcut: shortcut("2"), icon: "entries" },
 		{ id: "calendar", shortcut: shortcut("3"), icon: "calendar" },
 		{ id: "reports", shortcut: shortcut("4"), icon: "reports" },
 		{ id: "settings", shortcut: shortcut("5"), icon: "settings" },
 	];
+</script>
+
+<script lang="ts">
+	import type { Snippet } from "svelte";
+	import { strings } from "../strings";
+	import Icon from "./Icon.svelte";
+	import Logo from "./Logo.svelte";
 
 	let {
 		active,
@@ -31,11 +35,11 @@
 
 <nav class="sidebar" aria-label={strings.nav.label}>
 	<div class="brand">
-		<img src={lockup} alt={strings.appName} />
+		<Logo />
 	</div>
 
 	<ul class="items">
-		{#each items as item (item.id)}
+		{#each navItems as item (item.id)}
 			<li>
 				<button
 					class="item"
@@ -71,10 +75,6 @@
 		align-items: center;
 		height: 34px;
 		padding: 4px 10px;
-	}
-	.brand img {
-		display: block;
-		height: 22px;
 	}
 	.items {
 		list-style: none;

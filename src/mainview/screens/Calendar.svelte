@@ -59,7 +59,7 @@
 					end: i.allDay ? localDate(i.end, tz) : new Date(i.end),
 					allDay: i.allDay,
 					title: i.title || strings.calendar.untitled,
-					classNames: "clipa-event",
+					classNames: i.color ? ["clipa-event", "colored"] : "clipa-event",
 					styles: i.color ? [`--event: ${i.color}`] : [],
 					extendedProps: { instance: i },
 				}),
@@ -190,19 +190,20 @@
 <style>
 	.toggle-label {
 		color: var(--clipa-text-2);
+		text-transform: var(--clipa-copy-transform);
 	}
 	.calendar {
 		flex: 1;
 		min-height: 0;
 		padding: 16px;
-		border: 1px solid var(--clipa-border);
+		border: var(--clipa-bw) solid var(--clipa-border);
 		border-radius: var(--clipa-r-card);
 		background: var(--clipa-surface);
+		box-shadow: var(--clipa-card-shadow);
 	}
 
 	/* EventCalendar theme mapped to the design tokens (clipa-ui-svelte README, "Calendar"). */
 	.calendar :global(.ec) {
-		color-scheme: dark;
 		height: 100%;
 		--ec-bg-color: var(--clipa-surface);
 		--ec-text-color: var(--clipa-text);
@@ -215,9 +216,9 @@
 		--ec-button-bg-color: var(--clipa-surface);
 		--ec-button-border-color: var(--clipa-border-strong);
 		--ec-button-text-color: var(--clipa-text-2);
-		--ec-button-active-bg-color: var(--clipa-surface-3);
+		--ec-button-active-bg-color: var(--clipa-seg-active-bg);
 		--ec-button-active-border-color: var(--clipa-border-strong);
-		--ec-button-active-text-color: var(--clipa-text);
+		--ec-button-active-text-color: var(--clipa-seg-active-fg);
 		--ec-today-bg-color: var(--clipa-accent-tint);
 		--ec-highlight-color: var(--clipa-accent-tint);
 		--ec-now-indicator-color: var(--clipa-danger);
@@ -233,13 +234,18 @@
 		margin-bottom: 12px;
 	}
 	.calendar :global(.ec-title) {
+		font-family: var(--clipa-display-font);
 		font-size: 16px;
-		font-weight: 650;
+		font-weight: var(--clipa-display-weight);
+		font-stretch: var(--clipa-display-stretch);
+		text-transform: var(--clipa-display-transform);
 	}
 	.calendar :global(.ec-button) {
 		height: 32px;
 		border-radius: var(--clipa-r);
+		font-family: var(--clipa-nav-font);
 		font-size: 13px;
+		text-transform: var(--clipa-nav-transform);
 	}
 	.calendar :global(.ec-day.ec-sat),
 	.calendar :global(.ec-day.ec-sun) {
@@ -266,5 +272,47 @@
 			var(--clipa-tracked-dark) 6px,
 			var(--clipa-tracked-dark) 12px
 		);
+	}
+
+	/* Retro: ink outlines, teal events, the day of today in mustard */
+	:global(:root[data-theme="retro"]) .calendar :global(.ec) {
+		--ec-border-color: var(--clipa-divider);
+		--ec-today-bg-color: rgba(227, 167, 47, 0.22);
+		--ec-button-border-color: var(--clipa-ink);
+		--ec-button-active-border-color: var(--clipa-ink);
+	}
+	:global(:root[data-theme="retro"]) .calendar :global(.ec-title) {
+		font-size: 24px;
+	}
+	:global(:root[data-theme="retro"]) .calendar :global(.ec-button) {
+		border-width: 2px;
+	}
+	:global(:root[data-theme="retro"]) .calendar :global(.ec-button-group .ec-button:not(:first-child)) {
+		margin-inline-start: -2px;
+	}
+	:global(:root[data-theme="retro"]) .calendar :global(.ec-col-head) {
+		font-family: var(--clipa-nav-font);
+		text-transform: var(--clipa-nav-transform);
+	}
+	:global(:root[data-theme="retro"]) .calendar :global(.ec-col-head.ec-today) {
+		background-color: var(--clipa-accent);
+		font-weight: 700;
+	}
+	:global(:root[data-theme="retro"]) .calendar :global(.ec-event.clipa-event) {
+		background-color: var(--clipa-event);
+		box-shadow: inset 0 0 0 1.5px var(--clipa-ink);
+		color: var(--clipa-event-text);
+	}
+	:global(:root[data-theme="retro"]) .calendar :global(.ec-event.clipa-event.colored) {
+		background-color: color-mix(in srgb, var(--event-color) var(--clipa-chip-mix), var(--clipa-surface));
+		color: var(--clipa-text);
+	}
+	:global(:root[data-theme="retro"]) .calendar :global(.ec-event-time) {
+		font-family: var(--clipa-mono);
+	}
+	:global(:root[data-theme="retro"]) .calendar :global(.ec-bg-event.tracked) {
+		inline-size: 9px;
+		border: 1.5px solid var(--clipa-ink);
+		border-radius: 2px;
 	}
 </style>

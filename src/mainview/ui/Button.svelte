@@ -36,14 +36,15 @@
 		align-items: center;
 		justify-content: center;
 		gap: 8px;
-		border: 1px solid transparent;
+		border: var(--clipa-bw) solid transparent;
 		border-radius: var(--clipa-r);
 		font-weight: 550;
 		white-space: nowrap;
 		transition:
 			background-color 120ms,
 			border-color 120ms,
-			filter 120ms;
+			filter 120ms,
+			transform 80ms;
 	}
 	.btn:disabled {
 		opacity: 0.5;
@@ -77,6 +78,13 @@
 	.primary:hover:not(:disabled) {
 		filter: brightness(1.08);
 	}
+	:global(:root[data-theme="retro"]) .primary {
+		border-color: var(--clipa-ink);
+		box-shadow: var(--clipa-btn-shadow);
+	}
+	:global(:root[data-theme="retro"]) .primary:active:not(:disabled) {
+		transform: translate(1px, 1px);
+	}
 	.stop {
 		background: var(--clipa-danger);
 		color: var(--clipa-on-danger);
@@ -92,6 +100,9 @@
 	}
 	.secondary:hover:not(:disabled) {
 		background: var(--clipa-raised-hover);
+	}
+	:global(:root[data-theme="retro"]) .secondary:not(:hover) {
+		background: var(--clipa-field);
 	}
 	.outline {
 		background: transparent;

@@ -4,6 +4,7 @@ import type { EntryWithTags, Tag } from "../../../core/types";
 import type { Navigation, RecoveryNotice, Screen, Settings } from "../../shared/rpc-schema";
 import { errorText, strings } from "../strings";
 import { api, onMessage } from "./rpc";
+import { startTheme, themeTraits } from "./theme";
 
 export const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -16,6 +17,7 @@ class AppState {
 	running = $state<EntryWithTags | null>(null);
 	tags = $state<Tag[]>([]);
 	settings = $state<Settings>({
+		theme: startTheme,
 		defaultTagIds: [],
 		showTrackedTime: true,
 		showTrayTimer: true,
@@ -44,6 +46,8 @@ class AppState {
 	tagIds = $state<string[]>([]);
 
 	tagById = $derived(new Map(this.tags.map((t) => [t.id, t])));
+	/** Layout differences of the current theme */
+	traits = $derived(themeTraits[this.settings.theme]);
 
 	private saveTimeout: ReturnType<typeof setTimeout> | null = null;
 

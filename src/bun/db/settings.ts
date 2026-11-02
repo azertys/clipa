@@ -1,9 +1,10 @@
 import type { Database } from "bun:sqlite";
 import type { WeekStart } from "../../../core/time";
-import type { ActivityDays, Settings } from "../../shared/rpc-schema";
+import type { ActivityDays, Settings, ThemeName } from "../../shared/rpc-schema";
 
 export const DEFAULT_IDLE_MINUTES = 5;
 const ACTIVITY_DAYS: ActivityDays[] = [30, 90, 365, 0];
+const THEMES: ThemeName[] = ["dark", "retro"];
 const strings = (value: unknown): string[] =>
 	Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 
@@ -45,7 +46,9 @@ export function readSettings(db: Database): Settings {
 	const live = new Set(
 		(db.query("SELECT id FROM tags WHERE deleted_at IS NULL").all() as { id: string }[]).map((r) => r.id),
 	);
+	const theme = getSetting<ThemeName>(db, "theme", "dark");
 	const settings = {
+		theme: THEMES.includes(theme) ? theme : "dark",
 		defaultTagIds: getSetting<string[]>(db, "default_tag_ids", []).filter((id) => live.has(id)),
 		showTrackedTime: getSetting(db, "show_tracked_time", true),
 		showTrayTimer: getSetting(db, "show_tray_timer", true),
@@ -66,6 +69,7 @@ export function readSettings(db: Database): Settings {
 }
 
 export function writeSettings(db: Database, patch: Partial<Settings>): Settings {
+	if (patch.theme !== undefined && THEMES.includes(patch.theme)) setSetting(db, "theme", patch.theme);
 	if (patch.defaultTagIds !== undefined) setSetting(db, "default_tag_ids", patch.defaultTagIds);
 	if (patch.showTrackedTime !== undefined) setSetting(db, "show_tracked_time", patch.showTrackedTime);
 	if (patch.showTrayTimer !== undefined) setSetting(db, "show_tray_timer", patch.showTrayTimer);

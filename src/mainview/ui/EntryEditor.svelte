@@ -153,7 +153,7 @@
 	.editor {
 		margin: 4px 0;
 		padding: 14px 16px 16px;
-		border: 1px solid var(--clipa-edit-border);
+		border: var(--clipa-bw) solid var(--clipa-edit-border);
 		border-radius: var(--clipa-r-lg);
 		background: var(--clipa-edit-bg);
 		display: flex;
@@ -175,9 +175,12 @@
 		flex: 1 1 240px;
 	}
 	label {
+		font-family: var(--clipa-label-font);
 		font-size: 12px;
 		font-weight: 600;
 		color: var(--clipa-muted);
+		text-transform: var(--clipa-label-transform);
+		letter-spacing: var(--clipa-label-spacing);
 	}
 	.next {
 		font-weight: 400;
@@ -187,6 +190,13 @@
 	textarea {
 		border-color: var(--clipa-border-raised);
 		background: var(--clipa-edit-field);
+	}
+	input {
+		font-family: var(--clipa-num-font);
+	}
+	:global(:root[data-theme="retro"]) input:focus,
+	:global(:root[data-theme="retro"]) textarea:focus {
+		box-shadow: var(--clipa-btn-shadow);
 	}
 	.t {
 		width: 96px;

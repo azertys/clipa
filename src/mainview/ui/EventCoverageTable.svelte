@@ -79,15 +79,34 @@
 	}
 	th {
 		color: var(--clipa-faint);
+		font-family: var(--clipa-label-font);
 		font-size: 12px;
 		font-weight: 550;
 		text-align: left;
 		padding: 8px 12px;
 		border-top: 1px solid var(--clipa-divider);
+		text-transform: var(--clipa-label-transform);
+		letter-spacing: var(--clipa-label-spacing);
 	}
 	td {
 		padding: 10px 12px;
-		border-top: 1px solid var(--clipa-divider);
+		border-top: var(--clipa-row-divider);
+	}
+	td.first {
+		font-family: var(--clipa-font);
+	}
+	:global(:root[data-theme="retro"]) th {
+		border-top: 0;
+		border-bottom: 2px solid var(--clipa-ink);
+		font-size: 11px;
+		font-weight: 700;
+	}
+	:global(:root[data-theme="retro"]) tbody tr:first-child td {
+		border-top: 0;
+	}
+	:global(:root[data-theme="retro"]) td.first {
+		font-size: 16px;
+		text-transform: lowercase;
 	}
 	.first {
 		padding-left: 16px;
@@ -128,7 +147,7 @@
 	}
 	.total td {
 		font-weight: 650;
-		border-top-color: var(--clipa-border-raised);
+		border-top: var(--clipa-bw) solid var(--clipa-border-raised);
 		padding-top: 12px;
 		padding-bottom: 12px;
 	}

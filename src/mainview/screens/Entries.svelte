@@ -262,12 +262,18 @@
 		background: transparent;
 		color: var(--clipa-text-2);
 		font-weight: 550;
+		text-transform: var(--clipa-nav-transform);
+	}
+	:global(:root[data-theme="retro"]) .tag-filter select {
+		background: var(--clipa-surface);
+		color: var(--clipa-text);
 	}
 	.new {
 		padding: 4px 8px;
-		border: 1px solid var(--clipa-border);
+		border: var(--clipa-bw) solid var(--clipa-border);
 		border-radius: var(--clipa-r-card);
 		background: var(--clipa-surface);
+		box-shadow: var(--clipa-card-shadow);
 	}
 	.groups {
 		display: flex;

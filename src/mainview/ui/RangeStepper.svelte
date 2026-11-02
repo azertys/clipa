@@ -36,7 +36,7 @@
 		display: inline-flex;
 		align-items: stretch;
 		height: 36px;
-		border: 1px solid var(--clipa-border-strong);
+		border: var(--clipa-bw) solid var(--clipa-border-strong);
 		border-radius: var(--clipa-r-md);
 		background: var(--clipa-surface);
 		overflow: hidden;
@@ -64,11 +64,13 @@
 		align-items: center;
 		gap: 8px;
 		padding: 0 12px;
-		border-left: 1px solid var(--clipa-border-strong);
-		border-right: 1px solid var(--clipa-border-strong);
+		border-left: var(--clipa-bw) solid var(--clipa-border-strong);
+		border-right: var(--clipa-bw) solid var(--clipa-border-strong);
 		color: var(--clipa-text);
+		font-family: var(--clipa-nav-font);
 		font-size: 13px;
 		white-space: nowrap;
+		text-transform: var(--clipa-nav-transform);
 	}
 	.cal {
 		color: var(--clipa-muted);

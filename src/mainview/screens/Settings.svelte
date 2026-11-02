@@ -18,6 +18,7 @@
 	import Segmented from "../ui/Segmented.svelte";
 	import SettingsRow from "../ui/SettingsRow.svelte";
 	import TagInput from "../ui/TagInput.svelte";
+	import ThemePicker from "../ui/ThemePicker.svelte";
 	import Toggle from "../ui/Toggle.svelte";
 
 	let renaming = $state<string | null>(null);
@@ -202,6 +203,10 @@
 
 <div class="narrow">
 	<PageHeader title={strings.settings.title} subtitle={strings.settings.subtitle} />
+
+	<Card title={strings.settings.theme}>
+		<ThemePicker value={app.settings.theme} onchange={(theme) => set({ theme })} />
+	</Card>
 
 	<Card title={strings.settings.general}>
 		<SettingsRow
@@ -538,12 +543,13 @@
 		align-items: center;
 		gap: 12px;
 		min-height: 48px;
-		border-top: 1px solid var(--clipa-divider);
+		border-top: var(--clipa-row-divider);
 	}
 	.color {
 		position: relative;
 		width: 22px;
 		height: 22px;
+		border: var(--clipa-chip-border);
 		border-radius: 6px;
 		flex: none;
 	}

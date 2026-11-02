@@ -66,8 +66,10 @@
 		gap: 4px;
 		height: 26px;
 		padding: 0 4px 0 10px;
+		border: var(--clipa-chip-border);
 		border-radius: var(--clipa-r-sm);
 		background: var(--clipa-surface-2);
+		font-family: var(--clipa-label-font);
 		font-size: 13px;
 	}
 	.chip button {

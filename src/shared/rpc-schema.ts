@@ -25,7 +25,11 @@ export type AppInfo = {
 	nativeLoaded: boolean;
 };
 
+/** The look of the view: colors, fonts and layout (src/mainview/lib/theme.ts). */
+export type ThemeName = "dark" | "retro";
+
 export type Settings = {
+	theme: ThemeName;
 	defaultTagIds: string[];
 	/** Calendar: show tracked time next to the events. */
 	showTrackedTime: boolean;

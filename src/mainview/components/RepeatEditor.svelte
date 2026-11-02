@@ -129,7 +129,7 @@
 	.days button {
 		height: 28px;
 		padding: 0 9px;
-		border: 1px solid var(--clipa-border-strong);
+		border: var(--clipa-bw) solid var(--clipa-border-strong);
 		border-radius: var(--clipa-r-sm);
 		background: var(--clipa-field);
 		color: var(--clipa-text-2);
@@ -137,7 +137,7 @@
 	}
 	.days button.on {
 		background: var(--clipa-accent);
-		border-color: var(--clipa-accent);
+		border-color: var(--clipa-focus);
 		color: var(--clipa-on-accent);
 		font-weight: 600;
 	}

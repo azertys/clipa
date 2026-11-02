@@ -32,9 +32,11 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
+		border: var(--clipa-chip-border);
 		border-radius: var(--clipa-r-sm);
-		background: color-mix(in srgb, var(--tag) 16%, var(--clipa-surface));
-		color: color-mix(in srgb, var(--tag) 22%, var(--clipa-chip-text-base));
+		background: color-mix(in srgb, var(--tag) var(--clipa-chip-mix), var(--clipa-surface));
+		color: color-mix(in srgb, var(--tag) var(--clipa-chip-text-mix), var(--clipa-chip-text-base));
+		font-family: var(--clipa-label-font);
 		white-space: nowrap;
 		flex: none;
 	}
@@ -60,6 +62,13 @@
 	.md .swatch {
 		width: 8px;
 		height: 8px;
+	}
+	/* Retro: the whole chip has the color, so there is no swatch */
+	:global(:root[data-theme="retro"]) .swatch {
+		display: none;
+	}
+	:global(:root[data-theme="retro"]) .name {
+		text-transform: lowercase;
 	}
 	.x {
 		width: 20px;

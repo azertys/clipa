@@ -173,24 +173,26 @@
 	<div class="stats">
 		<StatCard
 			label={strings.reports.tracked}
-			swatch="tracked"
+			tone="tracked"
 			value={formatDuration(report.totals.trackedMs)}
 			sub={strings.reports.entriesDays(report.entryCount, view.daysTracked)}
 		/>
 		<StatCard
 			label={strings.reports.planned}
-			swatch="planned"
+			tone="planned"
 			value={formatDuration(report.totals.plannedMs)}
 			sub={strings.reports.eventCount(report.events.length)}
 		/>
 		<StatCard
 			label={strings.reports.covered}
+			tone="covered"
 			value={formatDuration(report.totals.coveredMs)}
 			progress={view.covered}
 			sub={strings.reports.coveredOf(formatPercent(view.covered))}
 		/>
 		<StatCard
 			label={strings.reports.outside}
+			tone="outside"
 			value={formatDuration(report.totals.outsideEventsMs)}
 			sub={strings.reports.ofTracked(formatPercent(view.outside))}
 		/>
@@ -287,6 +289,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
+		font-family: var(--clipa-label-font);
 		font-size: 12px;
 		color: var(--clipa-muted);
 	}
@@ -296,7 +299,7 @@
 		border-radius: 2px;
 	}
 	.sw.planned {
-		border: 1.5px solid var(--clipa-faint);
+		border: var(--clipa-planned-outline);
 	}
 	.sw.tracked {
 		background: var(--clipa-tracked);

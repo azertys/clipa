@@ -144,11 +144,11 @@
 		gap: 6px;
 		padding: 4px 8px;
 		border-radius: var(--clipa-r);
-		border: 1px solid var(--clipa-border-strong);
+		border: var(--clipa-bw) solid var(--clipa-border-strong);
 		background: var(--clipa-field);
 	}
 	.field:focus-within {
-		border-color: var(--clipa-accent);
+		border-color: var(--clipa-focus);
 	}
 	.combo {
 		position: relative;
@@ -164,6 +164,7 @@
 		font-size: 14px;
 	}
 	.hint {
+		font-family: var(--clipa-label-font);
 		font-size: 12px;
 		color: var(--clipa-faint);
 	}
@@ -177,7 +178,7 @@
 		padding: 4px;
 		list-style: none;
 		background: var(--clipa-menu);
-		border: 1px solid var(--clipa-border-raised);
+		border: var(--clipa-bw) solid var(--clipa-border-raised);
 		border-radius: var(--clipa-r-lg);
 		box-shadow: var(--clipa-shadow);
 	}
@@ -188,12 +189,13 @@
 		height: 32px;
 		padding: 0 10px;
 		border-radius: var(--clipa-r-sm);
+		font-family: var(--clipa-label-font);
 		font-size: 13px;
 		color: var(--clipa-text-2);
 	}
 	.menu li.hl {
-		background: var(--clipa-surface-3);
-		color: var(--clipa-text);
+		background: var(--clipa-seg-active-bg);
+		color: var(--clipa-seg-active-fg);
 	}
 	.sw {
 		width: 8px;

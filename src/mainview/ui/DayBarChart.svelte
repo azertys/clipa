@@ -99,6 +99,7 @@
 		position: relative;
 		width: 32px;
 		flex: none;
+		font-family: var(--clipa-num-font);
 		font-size: 11px;
 		color: var(--clipa-faint);
 	}
@@ -143,17 +144,26 @@
 		border-radius: 2px 2px 0 0;
 	}
 	.planned {
-		border: 1.5px solid var(--clipa-faint);
+		border: var(--clipa-planned-outline);
 		border-bottom: 0;
 	}
 	.tracked {
 		background: var(--clipa-tracked);
+		border: var(--clipa-seg-border);
+		border-bottom: 0;
+	}
+	:global(:root[data-theme="retro"]) .tracked {
+		border-width: 2px;
+	}
+	:global(:root[data-theme="retro"]) .plot {
+		border-bottom: 2px solid var(--clipa-ink);
 	}
 	.labels {
 		display: grid;
 		grid-auto-flow: column;
 		grid-auto-columns: minmax(0, 1fr);
 		text-align: center;
+		font-family: var(--clipa-num-font);
 		font-size: 12px;
 	}
 	.dense .labels {

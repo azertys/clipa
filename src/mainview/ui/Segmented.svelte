@@ -29,7 +29,7 @@
 		display: inline-flex;
 		flex-wrap: wrap;
 		padding: 3px;
-		border: 1px solid var(--clipa-border-strong);
+		border: var(--clipa-bw) solid var(--clipa-border-strong);
 		border-radius: var(--clipa-r-md);
 		background: var(--clipa-surface);
 	}
@@ -47,8 +47,10 @@
 		background: transparent;
 		color: var(--clipa-text-2);
 		padding: 0 12px;
+		font-family: var(--clipa-nav-font);
 		font-size: 13px;
 		white-space: nowrap;
+		text-transform: var(--clipa-nav-transform);
 	}
 	.md button {
 		height: 28px;
@@ -63,8 +65,31 @@
 		color: var(--clipa-text);
 	}
 	.on {
-		background: var(--clipa-surface-3);
-		color: var(--clipa-text);
+		background: var(--clipa-seg-active-bg);
+		color: var(--clipa-seg-active-fg);
 		font-weight: 600;
+	}
+	/* Retro: separate keys in place of one track */
+	:global(:root[data-theme="retro"]) .seg {
+		padding: 0;
+		gap: 6px;
+		border: 0;
+		background: transparent;
+	}
+	:global(:root[data-theme="retro"]) .seg button {
+		height: 34px;
+		padding: 0 14px;
+		border: 2px solid var(--clipa-ink);
+		border-radius: var(--clipa-r-pill);
+		background: var(--clipa-surface);
+		color: var(--clipa-text);
+	}
+	:global(:root[data-theme="retro"]) .seg button.on {
+		background: var(--clipa-seg-active-bg);
+		color: var(--clipa-seg-active-fg);
+	}
+	:global(:root[data-theme="retro"]) .seg.sm button {
+		height: 30px;
+		padding: 0 10px;
 	}
 </style>

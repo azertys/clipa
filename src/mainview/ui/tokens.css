@@ -1,11 +1,14 @@
-/* Clipa design tokens: dark theme (from clipa-ui-svelte).
-   Every color the components use is a token here, so a light theme only needs a second block. */
+/* Clipa design tokens (from clipa-ui-svelte), one block per theme: "dark" (the default) and "retro".
+   lib/theme.ts sets the data-theme attribute on <html>, so a theme change needs no reload.
+   Rules for one theme only start with :root[data-theme="retro"]. */
 
-:root {
+:root,
+:root[data-theme="dark"] {
 	color-scheme: dark;
 
 	/* Surfaces */
 	--clipa-bg: #181818; /* content area */
+	--clipa-bg-pattern: none; /* drawn on the content area */
 	--clipa-sidebar: #141414;
 	--clipa-surface: #1f1f1f; /* cards */
 	--clipa-surface-2: #262626; /* raised / hover / secondary buttons */
@@ -15,19 +18,23 @@
 	--clipa-menu: #232323; /* menus, pills */
 	--clipa-row-hover: #242424;
 	--clipa-raised-hover: #2d2d2d; /* secondary button hover */
-	--clipa-knob-on: #ffffff; /* switch knob when on */
 	--clipa-collapsed: #1c1c1c; /* closed day group */
 	--clipa-edit-field: #141414; /* inputs inside the entry editor */
 
 	/* Lines */
+	--clipa-ink: #3a3a3a; /* strong outlines */
+	--clipa-bw: 1px; /* border width of cards, fields and buttons */
 	--clipa-border: #2b2b2b; /* card border */
 	--clipa-border-strong: #333333; /* inputs, buttons */
 	--clipa-border-raised: #3a3a3a; /* secondary buttons, menus, editor inputs */
 	--clipa-sidebar-border: #262626;
 	--clipa-divider: #2a2a2a; /* rows inside cards */
+	--clipa-row-divider: 1px solid var(--clipa-divider);
 	--clipa-chart-grid: #2c2c2c;
 	--clipa-track: #2e2e2e; /* empty part of bars */
 	--clipa-neutral: #5c5c5c; /* idle dot, "Other" bar */
+	--clipa-seg-border: 0 solid transparent; /* timeline segments, chart bars */
+	--clipa-planned-outline: 1.5px solid var(--clipa-faint); /* planned bars and swatches */
 
 	/* Text (all pass 4.5:1 on --clipa-surface) */
 	--clipa-text: #ededed;
@@ -35,13 +42,13 @@
 	--clipa-muted: #a3a3a3;
 	--clipa-faint: #8f8f8f;
 	--clipa-placeholder: #8a8a8a;
-	--clipa-chip-text-base: #ffffff; /* tag chip text is mixed from the tag color and this */
 
 	/* Accent (primary actions, selection) */
 	--clipa-accent: #6b9bf5;
 	--clipa-on-accent: #0d1626;
 	--clipa-accent-text: #8fb3f8;
 	--clipa-accent-tint: rgba(107, 155, 245, 0.06);
+	--clipa-focus: #6b9bf5;
 	--clipa-edit-bg: #1b1e25;
 	--clipa-edit-border: #3a4a6b;
 
@@ -66,11 +73,61 @@
 	--clipa-danger-text: #f08a80;
 	--clipa-danger-tint: rgba(240, 113, 103, 0.1);
 
-	/* Overlays */
-	--clipa-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+	/* Depth and overlays */
+	--clipa-shadow: 0 12px 32px rgba(0, 0, 0, 0.45); /* menus and dialogs */
+	--clipa-card-shadow: none;
+	--clipa-timer-shadow: none;
+	--clipa-btn-shadow: none;
 	--clipa-backdrop: rgba(0, 0, 0, 0.5);
 	--clipa-kbd-bg: rgba(0, 0, 0, 0.14);
 	--clipa-chip-hover: rgba(255, 255, 255, 0.08);
+
+	/* Controls */
+	--clipa-chip-border: 0 solid transparent;
+	--clipa-chip-mix: 16%; /* tag color in a chip's background */
+	--clipa-chip-text-mix: 22%; /* tag color in a chip's text, mixed with --clipa-chip-text-base */
+	--clipa-chip-text-base: #ffffff;
+	--clipa-seg-active-bg: var(--clipa-surface-3);
+	--clipa-seg-active-fg: var(--clipa-text);
+	--clipa-toggle-off: var(--clipa-border-raised);
+	--clipa-toggle-on: var(--clipa-accent);
+	--clipa-toggle-knob: var(--clipa-text-2);
+	--clipa-toggle-knob-on: #ffffff;
+	--clipa-toggle-border: 0 solid transparent;
+	--clipa-toggle-radius: 12px;
+	--clipa-knob-radius: 50%;
+	--clipa-lane-bg: var(--clipa-surface-2); /* timeline lanes */
+	--clipa-ruler: transparent; /* timeline ticks */
+	--clipa-app-bar: var(--clipa-accent);
+
+	/* Timer clock: plain digits here, an LCD panel in retro */
+	--clipa-clock-font: var(--clipa-font);
+	--clipa-clock-size: 56px;
+	--clipa-clock-bg: transparent;
+	--clipa-clock-border: 0 solid transparent;
+	--clipa-clock-pad: 0;
+	--clipa-clock-fg: var(--clipa-text);
+	--clipa-clock-idle-fg: var(--clipa-text);
+	--clipa-clock-ghost: transparent; /* unlit segments behind the digits */
+	--clipa-clock-glow: none;
+
+	/* Event cards on Today */
+	--clipa-evcard-bg: transparent;
+	--clipa-evcard-fg: inherit;
+	--clipa-evcard-border: 0 solid transparent;
+	--clipa-evcard-pad: 12px 0;
+	--clipa-evcard-radius: 0;
+	--clipa-evcard-gap: 0px;
+
+	/* Report tiles */
+	--clipa-stat-tracked-bg: var(--clipa-surface);
+	--clipa-stat-tracked-fg: var(--clipa-text);
+	--clipa-stat-covered-bg: var(--clipa-surface);
+	--clipa-stat-covered-fg: var(--clipa-text);
+	--clipa-stat-outside-bg: var(--clipa-surface);
+	--clipa-stat-outside-fg: var(--clipa-text);
+	--clipa-stat-label: var(--clipa-muted);
+	--clipa-stat-planned-style: solid;
 
 	/* Radii */
 	--clipa-r-xs: 4px;
@@ -79,10 +136,164 @@
 	--clipa-r-md: 9px;
 	--clipa-r-lg: 10px;
 	--clipa-r-card: 14px;
+	--clipa-r-pill: 9px;
 
 	/* Type */
 	--clipa-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
 	--clipa-mono: ui-monospace, "SF Mono", Menlo, monospace;
+	--clipa-num-font: var(--clipa-font); /* times and durations */
+	--clipa-label-font: var(--clipa-font); /* small labels, inputs */
+	--clipa-label-transform: none;
+	--clipa-label-spacing: 0;
+	--clipa-display-font: var(--clipa-font); /* h1, h2 */
+	--clipa-display-weight: 650;
+	--clipa-display-stretch: 100%;
+	--clipa-display-transform: none;
+	--clipa-h1-size: 24px;
+	--clipa-h2-size: 15px;
+	--clipa-nav-font: var(--clipa-font); /* navigation, segmented controls */
+	--clipa-nav-transform: none;
+	--clipa-copy-transform: none; /* short UI copy, for example "today" */
+}
+
+/* Retro: beige, mustard and teal, with ink outlines and hard shadows. */
+:root[data-theme="retro"] {
+	color-scheme: light;
+
+	--clipa-bg: #beb8a8;
+	--clipa-bg-pattern: radial-gradient(#a9a393 1px, transparent 1.2px);
+	--clipa-sidebar: #beb8a8;
+	--clipa-surface: #d9d3c3;
+	--clipa-surface-2: #cbc4b2;
+	--clipa-surface-3: #1e1b16;
+	--clipa-field: #ede6d4;
+	--clipa-weekend: #cbc4b2;
+	--clipa-menu: #ede6d4;
+	--clipa-row-hover: rgba(30, 27, 22, 0.06);
+	--clipa-raised-hover: #e2dbc8;
+	--clipa-collapsed: #d4cebe;
+	--clipa-edit-field: #dfd8c7;
+
+	--clipa-ink: #1e1b16;
+	--clipa-bw: 2px;
+	--clipa-border: #1e1b16;
+	--clipa-border-strong: #1e1b16;
+	--clipa-border-raised: #1e1b16;
+	--clipa-sidebar-border: #1e1b16;
+	--clipa-divider: #9c9584;
+	--clipa-row-divider: 1.5px dashed #9c9584;
+	--clipa-chart-grid: #9c9584;
+	--clipa-track: #ede6d4;
+	--clipa-neutral: #8c8576;
+	--clipa-seg-border: 1.5px solid #1e1b16;
+	--clipa-planned-outline: 2px dashed #1e1b16;
+
+	--clipa-text: #1e1b16;
+	--clipa-text-2: #2e2a23;
+	--clipa-muted: #4a453b;
+	--clipa-faint: #4a453b;
+	--clipa-placeholder: rgba(74, 69, 59, 0.85);
+
+	--clipa-accent: #e3a72f;
+	--clipa-on-accent: #1e1b16;
+	--clipa-accent-text: #6b4a0e;
+	--clipa-accent-tint: rgba(227, 167, 47, 0.16);
+	--clipa-focus: #1e1b16;
+	--clipa-edit-bg: #ebd49c;
+	--clipa-edit-border: #1e1b16;
+
+	--clipa-tracked: #e3a72f;
+	--clipa-tracked-dark: #1e1b16;
+	--clipa-tracked-text: #6b4a0e;
+	--clipa-tracked-bg: #2b2a24;
+	--clipa-tracked-border: #1e1b16;
+	--clipa-tracked-glow: transparent;
+
+	--clipa-event: #276a70;
+	--clipa-event-fill: #276a70;
+	--clipa-event-line: #1e1b16;
+	--clipa-event-text: #f1ebdd;
+	--clipa-event-soft: #8e2a10;
+
+	--clipa-danger: #d2552c;
+	--clipa-on-danger: #1e1b16;
+	--clipa-danger-text: #8e2a10;
+	--clipa-danger-tint: rgba(210, 85, 44, 0.14);
+
+	--clipa-shadow: 6px 6px 0 #1e1b16;
+	--clipa-card-shadow: 4px 4px 0 #1e1b16;
+	--clipa-timer-shadow: 6px 6px 0 #1e1b16;
+	--clipa-btn-shadow: 3px 3px 0 #1e1b16;
+	--clipa-backdrop: rgba(30, 27, 22, 0.35);
+	--clipa-kbd-bg: rgba(30, 27, 22, 0.12);
+	--clipa-chip-hover: rgba(30, 27, 22, 0.12);
+
+	--clipa-chip-border: 1.5px solid #1e1b16;
+	--clipa-chip-mix: 72%; /* mutes bright tag colors toward the beige */
+	--clipa-chip-text-mix: 0%;
+	--clipa-chip-text-base: #1e1b16;
+	--clipa-seg-active-bg: #1e1b16;
+	--clipa-seg-active-fg: #ede6d4;
+	--clipa-toggle-off: #ede6d4;
+	--clipa-toggle-on: #e3a72f;
+	--clipa-toggle-knob: #8c8576;
+	--clipa-toggle-knob-on: #1e1b16;
+	--clipa-toggle-border: 2px solid #1e1b16;
+	--clipa-toggle-radius: 6px;
+	--clipa-knob-radius: 3px;
+	--clipa-lane-bg: transparent;
+	--clipa-ruler: #1e1b16;
+	--clipa-app-bar: #276a70;
+
+	--clipa-clock-font: var(--clipa-mono);
+	--clipa-clock-size: 88px;
+	--clipa-clock-bg: #2b2a24;
+	--clipa-clock-border: 2px solid #1e1b16;
+	--clipa-clock-pad: 14px 22px 12px;
+	--clipa-clock-fg: #f4b63f;
+	--clipa-clock-idle-fg: #c99a3a;
+	--clipa-clock-ghost: #423d2e;
+	--clipa-clock-glow: 0 0 18px rgba(244, 182, 63, 0.35);
+
+	--clipa-evcard-bg: #276a70;
+	--clipa-evcard-fg: #f1ebdd;
+	--clipa-evcard-border: 2px solid #1e1b16;
+	--clipa-evcard-pad: 14px 16px;
+	--clipa-evcard-radius: 12px;
+	--clipa-evcard-gap: 12px;
+
+	--clipa-stat-tracked-bg: #e3a72f;
+	--clipa-stat-tracked-fg: #1e1b16;
+	--clipa-stat-covered-bg: #276a70;
+	--clipa-stat-covered-fg: #f1ebdd;
+	--clipa-stat-outside-bg: #d99a8c;
+	--clipa-stat-outside-fg: #1e1b16;
+	--clipa-stat-label: inherit;
+	--clipa-stat-planned-style: dashed;
+
+	--clipa-r-xs: 3px;
+	--clipa-r-sm: 5px;
+	--clipa-r: 6px;
+	--clipa-r-md: 8px;
+	--clipa-r-lg: 10px;
+	--clipa-r-card: 16px;
+	--clipa-r-pill: 8px;
+
+	--clipa-font: "Archivo Variable", Archivo, system-ui, sans-serif;
+	--clipa-mono: "Space Mono", ui-monospace, monospace;
+	--clipa-num-font: var(--clipa-mono);
+	--clipa-label-font: var(--clipa-mono);
+	--clipa-label-transform: uppercase;
+	--clipa-label-spacing: 0.08em;
+	--clipa-display-font: var(--clipa-font);
+	--clipa-display-weight: 900;
+	--clipa-display-stretch: 125%;
+	--clipa-display-transform: uppercase;
+	--clipa-h1-size: 48px;
+	--clipa-h2-size: 20px;
+	--clipa-nav-font: var(--clipa-mono);
+	--clipa-nav-transform: lowercase;
+	--clipa-copy-transform: lowercase;
 }
 
 html,
@@ -115,13 +326,38 @@ textarea {
 	color: inherit;
 }
 
+/* Fields use the label font (mono in retro). Notes in a textarea keep the text font. */
+input,
+select {
+	font-family: var(--clipa-label-font);
+}
+
 :focus-visible {
-	outline: 2px solid var(--clipa-accent);
+	outline: 2px solid var(--clipa-focus);
 	outline-offset: 2px;
 }
 
 .clipa-num {
+	font-family: var(--clipa-num-font);
 	font-variant-numeric: tabular-nums;
+}
+
+/* Small field labels: "Tags", "Started at" */
+.clipa-label {
+	font-family: var(--clipa-label-font);
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--clipa-muted);
+	text-transform: var(--clipa-label-transform);
+	letter-spacing: var(--clipa-label-spacing);
+}
+
+/* Page and card titles */
+.clipa-display {
+	font-family: var(--clipa-display-font);
+	font-weight: var(--clipa-display-weight);
+	font-stretch: var(--clipa-display-stretch);
+	text-transform: var(--clipa-display-transform);
 }
 
 .clipa-sr-only {

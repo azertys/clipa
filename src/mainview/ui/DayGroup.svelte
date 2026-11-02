@@ -30,7 +30,7 @@
 	<section class="group" aria-label={title}>
 		<header class="head">
 			<button class="toggle" type="button" aria-expanded="true" onclick={() => ontoggle(false)}>
-				<h2>{title}{#if badge}<span class="badge">{badge}</span>{/if}</h2>
+				<h2 class="clipa-display">{title}{#if badge}<span class="badge">{badge}</span>{/if}</h2>
 			</button>
 			<span class="meta">{strings.entries.dayTotal} <strong class="clipa-num">{formatDuration(totalMs)}</strong></span>
 		</header>
@@ -47,8 +47,9 @@
 <style>
 	.group {
 		background: var(--clipa-surface);
-		border: 1px solid var(--clipa-border);
+		border: var(--clipa-bw) solid var(--clipa-border);
 		border-radius: var(--clipa-r-card);
+		box-shadow: var(--clipa-card-shadow);
 		padding: 14px 8px 8px;
 	}
 	.head {
@@ -70,18 +71,22 @@
 	}
 	h2 {
 		margin: 0;
-		font-size: 15px;
-		font-weight: 650;
+		font-size: var(--clipa-h2-size);
 	}
 	.badge {
 		margin-left: 8px;
+		font-family: var(--clipa-label-font);
 		font-size: 12px;
 		font-weight: 550;
+		font-stretch: 100%;
+		text-transform: none;
 		color: var(--clipa-accent-text);
 	}
 	.meta {
+		font-family: var(--clipa-num-font);
 		font-size: 13px;
 		color: var(--clipa-muted);
+		text-transform: var(--clipa-copy-transform);
 	}
 	.meta strong {
 		color: var(--clipa-text);
@@ -94,7 +99,7 @@
 		gap: 10px;
 		height: 48px;
 		padding: 0 16px;
-		border: 1px solid var(--clipa-border);
+		border: var(--clipa-bw) solid var(--clipa-border);
 		border-radius: 12px;
 		background: var(--clipa-collapsed);
 		color: var(--clipa-muted);
@@ -108,5 +113,36 @@
 		font-size: 14px;
 		font-weight: 600;
 		color: var(--clipa-text);
+	}
+	/* Retro: a bigger title, the badge as a mustard tag, a dashed outline when closed */
+	:global(:root[data-theme="retro"]) h2 {
+		display: flex;
+		align-items: center;
+		font-size: 24px;
+	}
+	:global(:root[data-theme="retro"]) .badge {
+		height: 24px;
+		display: inline-flex;
+		align-items: center;
+		padding: 0 8px;
+		border: 1.5px solid var(--clipa-ink);
+		border-radius: var(--clipa-r-sm);
+		background: var(--clipa-accent);
+		color: var(--clipa-on-accent);
+		font-weight: 700;
+		text-transform: lowercase;
+	}
+	:global(:root[data-theme="retro"]) .group .meta strong {
+		font-size: 20px;
+	}
+	:global(:root[data-theme="retro"]) .closed {
+		border-style: dashed;
+	}
+	:global(:root[data-theme="retro"]) .ctitle {
+		font-family: var(--clipa-display-font);
+		font-size: 18px;
+		font-weight: 900;
+		font-stretch: 125%;
+		text-transform: uppercase;
 	}
 </style>

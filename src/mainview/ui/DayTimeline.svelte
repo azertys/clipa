@@ -39,6 +39,7 @@
 		return { from, to: Math.min(24, Math.max(to, from + 1)) };
 	});
 	const span = $derived((hours.to - hours.from) * 60);
+	const halfHourPct = $derived((30 / span) * 100);
 
 	function pos(ms: number): number {
 		return Math.min(100, Math.max(0, ((minutesOf(ms) - hours.from * 60) / span) * 100));
@@ -89,7 +90,8 @@
 	</div>
 	<div class="lane">
 		<span class="lane-label"></span>
-		<div class="ticks clipa-num" aria-hidden="true">
+		<div class="ticks clipa-num" aria-hidden="true" style="--half: {halfHourPct}%">
+			<span class="ruler"></span>
 			{#each ticks as t (t.label)}
 				<span style="left: {t.left}%">{t.label}</span>
 			{/each}
@@ -101,8 +103,9 @@
 <style>
 	.timeline {
 		background: var(--clipa-surface);
-		border: 1px solid var(--clipa-border);
+		border: var(--clipa-bw) solid var(--clipa-border);
 		border-radius: var(--clipa-r-card);
+		box-shadow: var(--clipa-card-shadow);
 		padding: 18px 24px 14px;
 		display: flex;
 		flex-direction: column;
@@ -116,21 +119,24 @@
 	.lane-label {
 		width: 60px;
 		flex: none;
+		font-family: var(--clipa-label-font);
 		font-size: 12px;
 		color: var(--clipa-muted);
+		text-transform: var(--clipa-copy-transform);
 	}
 	.track {
 		position: relative;
 		flex: 1;
 		height: 14px;
 		border-radius: var(--clipa-r-xs);
-		background: var(--clipa-surface-2);
+		background: var(--clipa-lane-bg);
 	}
 	.seg {
 		position: absolute;
 		top: 0;
 		bottom: 0;
 		border-radius: 3px;
+		border: var(--clipa-seg-border);
 	}
 	.event {
 		background: var(--clipa-event);
@@ -163,7 +169,7 @@
 		font-size: 11px;
 		color: var(--clipa-faint);
 	}
-	.ticks span {
+	.ticks span:not(.ruler) {
 		position: absolute;
 		transform: translateX(-50%);
 		white-space: nowrap;
@@ -171,5 +177,52 @@
 	.ticks .now-label {
 		color: var(--clipa-danger);
 		font-weight: 600;
+	}
+	/* Retro: taller lanes, a ruler with half-hour ticks, and the time of now on a red label */
+	.ruler {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: -6px;
+		height: 8px;
+		border-top: 1.5px solid var(--clipa-ruler);
+		background-image: repeating-linear-gradient(
+			to right,
+			var(--clipa-ruler) 0,
+			var(--clipa-ruler) 1.5px,
+			transparent 1.5px,
+			transparent var(--half)
+		);
+	}
+	:global(:root[data-theme="retro"]) .track {
+		height: 22px;
+	}
+	:global(:root[data-theme="retro"]) .running {
+		background: repeating-linear-gradient(
+			135deg,
+			var(--clipa-tracked) 0,
+			var(--clipa-tracked) 6px,
+			var(--clipa-tracked-dark) 6px,
+			var(--clipa-tracked-dark) 8px
+		);
+	}
+	:global(:root[data-theme="retro"]) .now {
+		bottom: -40px;
+		width: 3px;
+		margin-left: -1.5px;
+	}
+	:global(:root[data-theme="retro"]) .ticks {
+		height: 22px;
+	}
+	:global(:root[data-theme="retro"]) .ticks span:not(.ruler) {
+		top: 5px;
+	}
+	:global(:root[data-theme="retro"]) .ticks .now-label {
+		padding: 0 5px;
+		border: 1.5px solid var(--clipa-ink);
+		border-radius: 3px;
+		background: var(--clipa-danger);
+		color: var(--clipa-ink);
+		font-weight: 700;
 	}
 </style>

@@ -47,10 +47,20 @@
 		overflow: hidden;
 		margin-bottom: 14px;
 	}
+	:global(:root[data-theme="retro"]) .stack {
+		height: 34px;
+		gap: 0;
+		border: 2px solid var(--clipa-ink);
+		border-radius: var(--clipa-r);
+	}
+	:global(:root[data-theme="retro"]) .stack > div + div {
+		border-left: 2px solid var(--clipa-ink);
+	}
 	.list {
 		list-style: none;
 		margin: 0;
 		padding: 0;
+		font-family: var(--clipa-num-font);
 		font-size: 13px;
 	}
 	li {
@@ -58,7 +68,7 @@
 		align-items: center;
 		gap: 10px;
 		padding: 8px 0;
-		border-top: 1px solid var(--clipa-divider);
+		border-top: var(--clipa-row-divider);
 	}
 	.sw {
 		width: 8px;
@@ -69,6 +79,9 @@
 	.name {
 		flex: 1;
 		min-width: 0;
+	}
+	:global(:root[data-theme="retro"]) .name {
+		text-transform: lowercase;
 	}
 	.pct {
 		width: 52px;

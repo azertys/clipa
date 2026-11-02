@@ -72,7 +72,7 @@
 		padding: 4px;
 		list-style: none;
 		background: var(--clipa-menu);
-		border: 1px solid var(--clipa-border-raised);
+		border: var(--clipa-bw) solid var(--clipa-border-raised);
 		border-radius: var(--clipa-r-lg);
 		box-shadow: var(--clipa-shadow);
 	}
@@ -89,8 +89,8 @@
 	}
 	button:hover,
 	button:focus-visible {
-		background: var(--clipa-surface-3);
-		color: var(--clipa-text);
+		background: var(--clipa-seg-active-bg);
+		color: var(--clipa-seg-active-fg);
 		outline: none;
 	}
 	.danger {

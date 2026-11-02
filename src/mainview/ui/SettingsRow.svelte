@@ -34,7 +34,7 @@
 		gap: 16px;
 		flex-wrap: wrap;
 		padding: 12px 0;
-		border-top: 1px solid var(--clipa-divider);
+		border-top: var(--clipa-row-divider);
 	}
 	.stacked {
 		flex-direction: column;
@@ -52,7 +52,13 @@
 		font-size: 14px;
 		display: block;
 	}
+	:global(:root[data-theme="retro"]) .label {
+		font-size: 16px;
+		font-weight: 700;
+		text-transform: lowercase;
+	}
 	.desc {
+		font-family: var(--clipa-label-font);
 		font-size: 12px;
 		color: var(--clipa-muted);
 		overflow-wrap: anywhere;

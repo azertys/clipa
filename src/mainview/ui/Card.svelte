@@ -28,7 +28,7 @@
 <section class="card" class:list class:running={tone === "running"} aria-label={title ? undefined : label}>
 	{#if title || meta || actions}
 		<header class="head">
-			{#if title}<h2>{title}</h2>{/if}
+			{#if title}<h2 class="clipa-display">{title}</h2>{/if}
 			<div class="right">
 				{#if meta}<span class="meta">{@render meta()}</span>{/if}
 				{@render actions?.()}
@@ -41,8 +41,9 @@
 <style>
 	.card {
 		background: var(--clipa-surface);
-		border: 1px solid var(--clipa-border);
+		border: var(--clipa-bw) solid var(--clipa-border);
 		border-radius: var(--clipa-r-card);
+		box-shadow: var(--clipa-card-shadow);
 		padding: 18px 20px 20px;
 		min-width: 0;
 	}
@@ -65,8 +66,7 @@
 	}
 	h2 {
 		margin: 0;
-		font-size: 15px;
-		font-weight: 650;
+		font-size: var(--clipa-h2-size);
 	}
 	.right {
 		display: flex;
@@ -74,6 +74,7 @@
 		gap: 12px;
 	}
 	.meta {
+		font-family: var(--clipa-num-font);
 		font-size: 13px;
 		color: var(--clipa-muted);
 	}

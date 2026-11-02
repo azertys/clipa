@@ -168,6 +168,10 @@ async function mainViewUrl(): Promise<string> {
 
 const url = await mainViewUrl();
 
+/** The view URL for a window. The hash has the theme, so the first paint has its colors (main.ts). */
+const viewUrl = (mode?: "idle") =>
+	`${url}#${new URLSearchParams({ ...(mode ? { [mode]: "" } : {}), theme: readSettings(db).theme })}`;
+
 /** What a window's RPC handlers use. */
 function windowContext(window: Pick<AppContext, "onDataChanged" | "closeWindow">): AppContext {
 	return {
@@ -206,7 +210,7 @@ function openMainWindow(navigation?: Navigation) {
 	rpc = createRpc(windowContext({ onDataChanged: () => tray?.refresh(), closeWindow: () => mainWindow?.close() }));
 	mainWindow = new BrowserWindow({
 		title: strings.appName,
-		url,
+		url: viewUrl(),
 		rpc,
 		frame: { width: 1100, height: 720 },
 	});
@@ -241,7 +245,7 @@ function openIdleWindow() {
 	);
 	idleWindow = new BrowserWindow({
 		title: strings.appName,
-		url: `${url}#idle`,
+		url: viewUrl("idle"),
 		rpc: idleRpc,
 		frame: { width: 440, height: 150 },
 		styleMask: { Miniaturizable: false, Resizable: false },

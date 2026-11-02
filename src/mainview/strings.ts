@@ -10,6 +10,7 @@ export const strings = {
 
 	nav: {
 		label: "Main",
+		home: "Clipa, go to Today",
 		today: "Today",
 		entries: "Entries",
 		calendar: "Calendar",
@@ -22,6 +23,11 @@ export const strings = {
 		thisWeek: "This week",
 		running: "Running",
 		openToday: (elapsed: string) => `Running timer, ${elapsed}. Open Today.`,
+	},
+
+	themes: {
+		dark: { label: "Dark", description: "Gray, with a blue accent" },
+		retro: { label: "Retro", description: "Beige, mustard and teal" },
 	},
 
 	/** Date patterns. Names of days and months come from Intl in English. */
@@ -209,6 +215,8 @@ export const strings = {
 			windows: "All data stays on this computer.",
 			linux: "All data stays on this computer.",
 		}),
+		theme: "Theme",
+		themeInUse: "✓ In use",
 		general: "General",
 		menuBarTimer: "Timer in menu bar",
 		menuBarTimerHint: "Show the running time next to the menu bar icon.",

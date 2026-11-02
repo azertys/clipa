@@ -40,7 +40,7 @@
 
 <main class="idle" aria-labelledby="idle-title">
 	{#if prompt}
-		<h1 id="idle-title">{strings.idle.title}</h1>
+		<h1 id="idle-title" class="clipa-display">{strings.idle.title}</h1>
 		<p>
 			{strings.idle.message(clock(prompt.start), clock(prompt.end), Math.round((prompt.end - prompt.start) / MINUTE))}
 		</p>
@@ -66,7 +66,6 @@
 	h1 {
 		margin: 0 0 6px;
 		font-size: 16px;
-		font-weight: 650;
 	}
 	p {
 		margin: 0;

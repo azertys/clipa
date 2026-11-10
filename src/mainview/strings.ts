@@ -382,6 +382,7 @@ export const strings = {
 	},
 
 	tray: {
+		today: (total: string) => `Today: ${total}`,
 		start: "Start timer",
 		stop: "Stop timer",
 		continue: "Continue",

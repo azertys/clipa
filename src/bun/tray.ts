@@ -1,15 +1,15 @@
 import type { Database } from "bun:sqlite";
 import { Tray, type MenuItemConfig } from "electrobun/main";
-import { firstLine, recentCombos, type Combo } from "../../core/entries";
-import { formatDuration } from "../../core/time";
+import { firstLine, recentCombos, trackedMs, type Combo } from "../../core/entries";
+import { addLocalDays, formatDuration, startOfLocalDay } from "../../core/time";
 import { strings } from "../mainview/strings";
 import { platform } from "../shared/platform";
-import { recentEntries } from "./db/entries";
+import { listEntries, recentEntries } from "./db/entries";
 import { readSettings } from "./db/settings";
 import { listTags } from "./db/tags";
 import type { TimerService } from "./services/timer";
 
-const TITLE_REFRESH_MS = 30_000;
+const TICK_MS = 30_000;
 const CONTINUE_COUNT = 5;
 
 type TrayIcons = { idle: string; running: string; template: boolean };
@@ -65,7 +65,8 @@ export class ClipaTray {
 	private readonly icons = trayIcons();
 	/** The image shown now. It is set again only when it changes. */
 	private image = this.icons.idle;
-	private titleTimer: ReturnType<typeof setInterval> | null = null;
+	/** Today's total in the menu now. The menu is set again when it changes. */
+	private today = "";
 
 	constructor(
 		private readonly db: Database,
@@ -75,6 +76,8 @@ export class ClipaTray {
 	) {
 		this.tray = new Tray({ title: "", image: this.icons.idle, template: this.icons.template, width: 16, height: 16 });
 		this.refresh();
+		// The elapsed time moves while the timer runs. Today's total moves with it, and goes back to 0:00 at midnight.
+		setInterval(() => this.tick(), TICK_MS);
 		this.tray.on("tray-clicked", (event: unknown) => {
 			const { action, data } = (event as { data: { action: string; data?: unknown } }).data;
 			if (action === "toggle") this.actions.toggle();
@@ -93,13 +96,23 @@ export class ClipaTray {
 			this.tray.setImage(image);
 		}
 		this.updateTitle();
-		if (running && !this.titleTimer) {
-			this.titleTimer = setInterval(() => this.updateTitle(), TITLE_REFRESH_MS);
-		} else if (!running && this.titleTimer) {
-			clearInterval(this.titleTimer);
-			this.titleTimer = null;
-		}
+		this.today = this.todayTotal();
 		this.tray.setMenu(this.menu(running !== null));
+	}
+
+	/** Sets the menu again only when today's total changed (once a minute while the timer runs). */
+	private tick() {
+		if (this.todayTotal() !== this.today) this.refresh();
+		else if (this.timer.status()) this.updateTitle();
+	}
+
+	/** Tracked time today as H:MM. Overlapping entries count once, as in the sidebar. */
+	private todayTotal(): string {
+		const now = this.now();
+		const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		const from = startOfLocalDay(now, tzid);
+		const to = addLocalDays(from, 1, tzid);
+		return formatDuration(trackedMs(listEntries(this.db, from, to), from, to, now));
 	}
 
 	private updateTitle() {
@@ -123,6 +136,8 @@ export class ClipaTray {
 			return label.length > 60 ? `${label.slice(0, 59)}…` : label;
 		};
 		return [
+			{ type: "normal", label: strings.tray.today(this.today), enabled: false },
+			{ type: "separator" },
 			{ type: "normal", label: running ? strings.tray.stop : strings.tray.start, action: "toggle" },
 			{
 				type: "normal",

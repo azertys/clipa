@@ -182,7 +182,7 @@ function windowContext(window: Pick<AppContext, "onDataChanged" | "closeWindow">
 		tracker,
 		system,
 		backups,
-		info: { version: "0.1.1", deviceId: ctx.deviceId, dbPath, nativeLoaded },
+		info: { version: "0.2.0", deviceId: ctx.deviceId, dbPath, nativeLoaded },
 		takeUiStart: () => {
 			const start = { navigation: pendingNavigation, recovery: pendingRecovery };
 			console.log(`[clipa] view ready, recovery notice: ${start.recovery ? "yes" : "no"}`);
